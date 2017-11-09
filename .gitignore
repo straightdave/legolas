@@ -1,1 +1,7 @@
+# ignore bits
 legolas
+action_runner/action_runner
+
+# ignore logs
+log/**
+**/*.log
