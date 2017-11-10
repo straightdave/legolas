@@ -3,8 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/fzzy/radix/redis"
-	"log"
+	"github.com/fzzy/radix/extra/pool"
+	"legolas/common/models"
+	L "log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,6 +18,11 @@ var (
 	logFile      = flag.String("l", "action_runner.log", "Log file name")
 )
 
+var (
+	poolSize  = 10
+	redisPool *pool.Pool
+)
+
 func main() {
 	flag.Parse()
 
@@ -25,42 +31,45 @@ func main() {
 		fmt.Printf("Cannot access to log file: %s\n", *logFile)
 		os.Exit(1)
 	}
-	log.SetOutput(logf)
+	L.SetOutput(logf)
 
-	client, err := redis.Dial("tcp", *queueAddress)
+	redisPool, err = pool.NewPool("tcp", *queueAddress, poolSize)
 	if err != nil {
-		log.Fatalf("Cannot connect to Redis instance: %s\n", *queueAddress)
+		L.Fatalf("Cannot create Redis pool at: %s\n", *queueAddress)
 	}
 
-	var cleanup = func() {
+	rc, err := redisPool.Get()
+	if err != nil {
+		L.Fatalf("Cannot get a connection from Redis pool for the main goroutine: %v\n", err)
+	}
+
+	jobProxy := &models.JobProxy{Queue: *queueName, Rc: rc}
+
+	cleanup := func() {
 		logf.Close()
-		client.Close()
+		redisPool.Put(rc)
+		redisPool.Empty()
 	}
 	defer cleanup()
 
-	// handling ctrl-c/TERM, to exit gracefully
+	// handling ctrl-c and TERM signals
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
 		cleanup()
-		fmt.Println("legolas action runner is stoppeed.")
+		fmt.Println("legolas action runner is interrupted.")
+		os.Exit(1)
 	}()
 
 	fmt.Println("action runner is listening...")
-	log.Println("action runner stared at: ", time.Now().String())
+	L.Println("action runner stared at: ", time.Now().String())
 	for {
-		data, err := client.Cmd("BLPOP", *queueName, 0).List()
+		job, err := jobProxy.Pop()
 		if err != nil {
-			if _, ok := err.(*redis.CmdError); ok {
-				continue
-			} else {
-				log.Fatalf("BLPOP met fatal error: %v\n", err)
-			}
+			L.Printf("failed to get job from the queue: %v\n", err)
+			continue
 		}
-
-		if len(data) > 1 {
-			go jobHandler(data[1])
-		}
+		go handle(job)
 	}
 }

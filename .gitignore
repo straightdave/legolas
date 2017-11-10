@@ -1,7 +1,10 @@
-# ignore bits
+# ignore bin files
 legolas
 action_runner/action_runner
 
 # ignore logs
 log/**
 **/*.log
+
+# ignore .DS_Store
+**/.DS_Store

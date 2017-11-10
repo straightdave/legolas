@@ -28,7 +28,7 @@ func TestJobInJson(t *testing.T) {
 	fmt.Println(c_job.Snippet)
 	fmt.Println(c_job.PreAction)
 
-	data2_j, err := data2.ToJson()
+	data2_j, err := data2.Json()
 	if err != nil {
 		t.Errorf("failed json marshalling\n")
 	}
@@ -47,14 +47,14 @@ func TestJobInBson(t *testing.T) {
 	}
 
 	for _, job := range jobs {
-		data, err := job.ToBson()
+		data, err := job.Json()
 		if err != nil {
 			t.Errorf("marshal failed: %v\n", err)
 		}
 		fmt.Println(string(data))
 
 		// test the snippet could be run after unmarshalling
-		c_job, err := JobFromBson(data)
+		c_job, err := JobFromJson(data)
 		if err != nil {
 			t.Errorf("content cannot unmarshal\n")
 		}

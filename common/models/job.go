@@ -2,7 +2,7 @@ package models
 
 import (
 	"encoding/json"
-	"gopkg.in/mgo.v2/bson"
+	"fmt"
 )
 
 type Job struct {
@@ -12,22 +12,23 @@ type Job struct {
 	PreAction string `json:"pre_action"`
 }
 
-func (job *Job) ToJson() ([]byte, error) {
+// Unmarshal bytes into a job struct
+func JobFromJson(data []byte) (job *Job, err error) {
+	err = json.Unmarshal(data, job)
+	return
+}
+
+// Marshal a job struct into bytes
+func (job *Job) Json() ([]byte, error) {
 	return json.Marshal(*job)
 }
 
-func (job *Job) ToBson() ([]byte, error) {
-	return bson.MarshalJSON(*job)
+// Get job ID: <case_run_id>__<job_name>
+func (job *Job) JobID() string {
+	return fmt.Sprintf("%s__%s", job.CaseRunID, job.Name)
 }
 
-func JobFromJson(data []byte) (Job, error) {
-	var job Job
-	err := json.Unmarshal(data, &job)
-	return job, err
-}
-
-func JobFromBson(data []byte) (Job, error) {
-	var job Job
-	err := bson.UnmarshalJSON(data, &job)
-	return job, err
+// Get previous job ID
+func (job *Job) PrevJobID() string {
+	return fmt.Sprintf("%s__%s", job.CaseRunID, job.PreAction)
 }
