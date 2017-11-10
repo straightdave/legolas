@@ -1,16 +1,7 @@
-/*
- */
-
 package main
 
-import (
-	"legolas/server"
-	"log"
-)
+import "legolas/server"
 
 func main() {
-	var _s server.Server
-	if err := _s.Start(); err != nil {
-		log.Fatal("Err: %v", err)
-	}
+	(&server.Server{}).Run()
 }

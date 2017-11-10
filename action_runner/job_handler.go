@@ -35,7 +35,7 @@ func handle(job *M.Job) {
 		case "done": // go on
 			break
 		case "failed": // just discard and mark as failed
-			js.Fail(fmt.Sprintf("Aborted due to previous Job [%s] is failed.", jsPrev.Id))
+			js.Fail(fmt.Sprintf("Aborted due to previous Job [%s] was failed.", jsPrev.Id))
 			return
 		default: // postpone
 			L.Printf("previous job [%s] is not done yet. append to queue.\n", jsPrev.Id)
