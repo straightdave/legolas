@@ -8,3 +8,9 @@ log/**
 
 # ignore .DS_Store
 **/.DS_Store
+
+# ignore node modules
+**/node_modules/
+
+# ignore webpack dist
+server/public/dist/
