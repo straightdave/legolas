@@ -2,9 +2,9 @@
 <template>
 <div id="app-detail">
     <div id="detail-header">
-        <p><input id="path" type="text" v-model="caseInfo.path"></input></p>
-        <p><input id="name" type="text" v-model="caseInfo.name"></input></p>
-        <p><input id="desc" type="text" v-model="caseInfo.desc"></input></p>
+        <p><input id="path" type="text" v-model="localCaseInfo.path"></input></p>
+        <p><input id="name" type="text" v-model="localCaseInfo.name"></input></p>
+        <p><input id="desc" type="text" v-model="localCaseInfo.desc"></input></p>
         <button v-on:click="saveCase">Save</button>
     </div>
     <div id="nav-in-case">
@@ -59,27 +59,33 @@ var AppDetail = Vue.extend({
     },
     data() {
         return {
+            localCaseInfo: {
+                path: this.caseInfo.path,
+                name: this.caseInfo.name,
+                desc: this.caseInfo.desc
+            },
             activeTab: 0,
             actions: [],
             currentAction: {},
-
-            caseInfoCopy: {}
         }
     },
     watch: {
         // watch prop:caseInfo
         // probably caused by user selecting another case in the list
         caseInfo: function (newCaseInfo) {
-            console.log('prop:caseInfo changed')
+            console.log('prop:caseInfo changed. new name: ' + newCaseInfo.name)
+
+            // update local. will discard unsaved local changes
+            this.localCaseInfo.path = newCaseInfo.path
+            this.localCaseInfo.name = newCaseInfo.name
+            this.localCaseInfo.desc = newCaseInfo.desc
+
             var self = this
             var url = `/case/${encodeURI(self.caseInfo.path)}/${encodeURI(self.caseInfo.name)}/actions`
             $.get(url, function (data) {
                 self.actions = data
             })
         }
-    },
-    mounted() {
-        this.caseInfoCopy = JSON.parse(JSON.stringify(this.caseInfo))
     },
     computed: {
         hasActions: function () {
@@ -105,7 +111,7 @@ var AppDetail = Vue.extend({
             })
         },
         saveCase() {
-            alert('save')
+            console.log('new case name: ' + this.localCaseInfo.name + ', old: ' + this.caseInfo.name)
         }
     }
 })
