@@ -51,10 +51,10 @@ div.case-inner {
     position: relative;
 }
 
-
 span.case-title {
     display: block;
     font-size: 20px;
+    overflow: hidden;
 }
 
 span.case-group {

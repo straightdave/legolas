@@ -60,19 +60,25 @@ var AppDetail = Vue.extend({
         return {
             activeTab: 0,
             actions: [],
-            currentAction: {}
+            currentAction: {},
+
+            caseInfoCopy: {}
         }
     },
     watch: {
-        // watch case info change
-        // probably re-render this component
+        // watch prop:caseInfo
+        // probably caused by user selecting another case in the list
         caseInfo: function (newCaseInfo) {
+            console.log('prop:caseInfo changed')
             var self = this
             var url = `/case/${encodeURI(self.caseInfo.path)}/${encodeURI(self.caseInfo.name)}/actions`
             $.get(url, function (data) {
                 self.actions = data
             })
         }
+    },
+    mounted() {
+        this.caseInfoCopy = JSON.parse(JSON.stringify(this.caseInfo))
     },
     computed: {
         hasActions: function () {
@@ -116,6 +122,7 @@ div#detail-header {
 
 div#detail-header input[type="text"] {
     border: 0;
+    width: 80%;
     background-color: #fff;
 }
 
