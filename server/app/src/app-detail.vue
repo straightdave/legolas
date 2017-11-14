@@ -2,32 +2,41 @@
 <template>
 <div id="app-detail">
     <div id="detail-header">
-        <p><span class="group">$/{{ group }}</span></p>
-        <p><span class="name">{{ name }}</span></p>
-        <p><span class="desc">{{ desc }}</span></p>
+        <p><input id="path" type="text" v-model="caseInfo.path"></input></p>
+        <p><input id="name" type="text" v-model="caseInfo.name"></input></p>
+        <p><input id="desc" type="text" v-model="caseInfo.desc"></input></p>
     </div>
-    <div id="nav_in_case">
+    <div id="nav-in-case">
         <ul>
-            <li><a v-on:click.stop.prevent="cliTab(0)" v-bind:class="{active: activeItem == 0}">Actions</a></li>
-            <li><a v-on:click.stop.prevent="cliTab(1)" v-bind:class="{active: activeItem == 1}">History</a></li>
-            <li><a v-on:click.stop.prevent="cliTab(2)" v-bind:class="{active: activeItem == 2}">Tracing</a></li>
+            <li><a v-on:click.stop.prevent="cliTab(0)" v-bind:class="{active: activeTab == 0}">Actions</a></li>
+            <li><a v-on:click.stop.prevent="cliTab(1)" v-bind:class="{active: activeTab == 1}">Variables</a></li>
+            <li><a v-on:click.stop.prevent="cliTab(2)" v-bind:class="{active: activeTab == 2}">Runs</a></li>
+            <li><a v-on:click.stop.prevent="cliTab(3)" v-bind:class="{active: activeTab == 3}">Tracing</a></li>
         </ul>
     </div>
     <div id="detail-panel">
-        <div v-if="activeItem == 0">
-            <div id="actionlist" v-if="actions.length">
+        <div v-if="activeTab == 0">
+            <div id="actionlist">
                 <AppAction
+                    v-if="hasActions"
                     v-for="a in actions"
-                    :key="a.id"
+                    :key="a.name"
                     :action="a"
-                    v-on:click="actionClicked(a.id)"
+                    @actionClicked="viewAction(a.name)"
                 />
+                <div id="newaction" v-on:click="addNewAction">
+                    <i class="fa fa-plus-square"></i>&nbsp;new
+                </div>
             </div>
+            <AppActionPanel v-if="hasCurrentAction" :action-object="currentAction"></AppActionPanel>
         </div>
-        <div v-else-if="activeItem == 1">
-            history
+        <div v-else-if="activeTab == 1">
+            viriables
         </div>
-        <div v-else-if="activeItem == 2">
+        <div v-else-if="activeTab == 2">
+            Runs
+        </div>
+        <div v-else-if="activeTab == 3">
             Data tracing
         </div>
     </div>
@@ -36,52 +45,57 @@
 
 <script>
 import AppAction from './app-action.vue'
+import AppActionPanel from './app-action-panel.vue'
+import $ from 'jquery'
 
 var AppDetail = Vue.extend({
-    components: { AppAction },
+    components: {AppAction, AppActionPanel},
     props: {
-        case: {
+        caseInfo: {
             type: Object,
             required: true
         }
     },
     data() {
         return {
-            id: this.case.id,
-            name: this.case.name,
-            desc: this.case.desc,
-            group: this.case.group,
-            activeItem: 0,
-
-
-            actions: [
-                {
-                    name: "action-1",
-                    casePath: this.case.group,
-                    caseName: this.case.name,
-                    index: 1
-                },
-                {
-                    name: "action-2",
-                    casePath: this.case.group,
-                    caseName: this.case.name,
-                    index: 2
-                },
-                {
-                    name: "action-3",
-                    casePath: this.case.group,
-                    caseName: this.case.name,
-                    index: 3
-                }
-            ]
+            activeTab: 0,
+            actions: [],
+            currentAction: {}
+        }
+    },
+    watch: {
+        // watch case info change
+        // probably re-render this component
+        caseInfo: function (newCaseInfo) {
+            var self = this
+            var url = `/case/${encodeURI(self.caseInfo.path)}/${encodeURI(self.caseInfo.name)}/actions`
+            $.get(url, function (data) {
+                self.actions = data
+            })
+        }
+    },
+    computed: {
+        hasActions: function () {
+            return this.actions !== null && this.actions.length > 0
+        },
+        hasCurrentAction: function () {
+            return this.currentAction.name !== undefined
         }
     },
     methods: {
         cliTab: function (item) {
-            this.activeItem = item
+            this.activeTab = item
         },
-        actionClicked: function (id) {
-            alert('action clicked: ' + id)
+        viewAction: function (name) {
+            this.currentAction = { name: name }
+        },
+        addNewAction: function () {
+            this.actions.push({
+                name: "newaction"
+            })
+        },
+        save() {
+            alert('save')
         }
     }
 })
@@ -90,33 +104,57 @@ export default AppDetail
 </script>
 
 <style scoped>
+div#app-detail {
+    float: left;
+    padding: 10px;
+}
 
 div#detail-header {
-    height: 72px;
+    height: 80px;
     overflow: hidden;
 }
 
-span.group, span.desc {
+div#detail-header input[type="text"] {
+    border: 0;
+    background-color: #fff;
+}
+
+input#path, input#desc {
+    font-size: 15px;
     color: gray;
 }
 
-span.name {
+input#name {
     font-size: 30px;
     font-weight: 300;
 }
 
-div#nav_in_case ul {
+div#detail-header button {
+    height: 30px;
+    width: 60px;
+    font-size: 15px;
+    font-weight: 200;
+    border: none;
+    background-color: #00B140;
+    color: #fff;
+    position: absolute;
+    right: 10px;
+    top: 5px;
+    cursor: pointer;
+}
+
+div#nav-in-case ul {
     display: inline-flex;
     list-style: none;
     margin-top: 15px;
     margin-bottom: 15px;
 }
 
-div#nav_in_case ul li {
+div#nav-in-case ul li {
     padding-right: 20px;
 }
 
-div#nav_in_case ul li a {
+div#nav-in-case ul li a {
     font-weight: 300;
     text-decoration: none;
     color: gray;
@@ -124,14 +162,29 @@ div#nav_in_case ul li a {
     display: block;
 }
 
-div#nav_in_case li a:hover,
-div#nav_in_case li a.active {
+div#nav-in-case li a:hover,
+div#nav-in-case li a.active {
     border-bottom: solid 2px #00B140;
     padding-bottom: 8px;
 }
 
+div#detail-panel {
+    width: 1000px;
+    min-width: 1000px;
+}
+
 div#actionlist {
     width: 300px;
+    float: left;
+}
+
+div#newaction {
+    width: 296px;
+    text-align: center;
+    font-size: 30px;
+    cursor: pointer;
+    color: #ececec;
+    border: solid 2px #ececec;
 }
 
 

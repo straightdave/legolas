@@ -1,9 +1,9 @@
 <!-- action item -->
 <template>
-<div id="action" v-on:click="$emit('viewAction', name)">
+<div id="action" v-on:click="$emit('actionClicked', action.name)">
     <div id="titlebar">
-        <p><span>{{ name }}</span></p>
-        <p><span>$/{{ casePath }}/{{ caseName }}#{{ name }}</span></p>
+        <p><span id="name">{{ action.name }}</span></p>
+        <p><span id="desc">This is an action</span></p>
     </div>
 </div>
 </template>
@@ -16,14 +16,6 @@ var AppAction = Vue.extend({
             type: Object,
             required: true
         }
-    },
-    data() {
-        return {
-            name: this.action.name,
-            casePath: this.action.casePath,
-            caseName: this.action.caseName,
-            index: this.action.index
-        }
     }
 })
 export default AppAction
@@ -32,10 +24,20 @@ export default AppAction
 
 <style>
 div#action {
-    width: 100%;
-    height: 100px;
-    border-bottom: solid 2px #ececec;
+    height: 60px;
     margin-bottom: 5px;
-    padding:3px;
+    padding:10px;
+    cursor: pointer;
+    background-color: #ececec;
+    overflow: hidden;
+}
+
+div#titlebar span#name {
+    font-size: 20px;
+    font-weight: 200;
+}
+div#titlebar span#desc {
+    color: gray;
+    font-weight: 200;
 }
 </style>

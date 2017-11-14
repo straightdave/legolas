@@ -1,6 +1,6 @@
 <!-- item -->
 <template>
-<div class="case" @click="$emit('view-case', id)">
+<div class="case" @click="$emit('view-case', name)">
     <div class="case-inner">
         <span class="case-title">
             <span v-if="lastResult == 'passed'" class="green">
@@ -8,7 +8,7 @@
             </span>
             {{ name }}
         </span>
-        <span class="case-group">$/{{ group }}</span>
+        <span class="case-group">$/{{ path }}</span>
     </div>
 </div>
 </template>
@@ -23,10 +23,9 @@ export default {
     },
     data() {
         return {
-            id: this.case.id,
             name: this.case.name,
-            lastResult: this.case.lastResult,
-            group: this.case.group
+            lastResult: 'passed',
+            path: this.case.path,
         }
     }
 }

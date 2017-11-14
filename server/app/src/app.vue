@@ -3,8 +3,8 @@
 <div id="app">
     <app-nav></app-nav>
     <div>
-        <app-sidebar @case-clicked="caseClicked"></app-sidebar>
-        <app-content :case-data="c"></app-content>
+        <app-sidebar @case-clicked="showCaseDetail"></app-sidebar>
+        <app-detail v-if="hasCInfo" :case-info="cinfo"></app-detail>
     </div>
 </div>
 </template>
@@ -12,20 +12,23 @@
 <script>
 import AppNav from './app-nav.vue'
 import AppSidebar from './app-sidebar.vue'
-import AppContent from './app-content.vue'
+import AppDetail from './app-detail.vue'
 
 var App = Vue.extend({
-    components: {AppNav, AppSidebar, AppContent},
+    components: {AppNav, AppSidebar, AppDetail},
     methods: {
-        caseClicked: function (id) {
-            this.c.name = id
+        showCaseDetail: function (c) {
+            this.cinfo = c
         }
     },
     data() {
         return {
-            c: {
-                name: "test"
-            }
+            cinfo: {}
+        }
+    },
+    computed: {
+        hasCInfo: function () {
+            return this.cinfo.name !== undefined
         }
     }
 })

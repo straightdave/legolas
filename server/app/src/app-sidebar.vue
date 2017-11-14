@@ -7,12 +7,12 @@
         <a id="create" v-on:click.stop.prevent="create"><i class="fa fa-plus"></i></a>
     </div>
 
-    <div id="list" v-if="cases.length">
+    <div id="list" v-if="cases != null && cases.length">
         <app-case
             v-for="c in cases"
-            :key="c.id"
+            :key="c.name"
             :case="c"
-            @view-case="$emit('case-clicked', c.id)"
+            @view-case="$emit('case-clicked', c)"
         />
     </div>
 </div>
@@ -21,40 +21,26 @@
 <script>
 import AppSearch from './app-search.vue'
 import AppCase from './app-case.vue'
-
-let nextItemId = 1
+import $ from 'jquery'
 
 export default {
     components: {AppSearch, AppCase},
     data() {
         return {
-            cases: [
-                {
-                    id: nextItemId++,
-                    name: 'hello',
-                    lastResult: 'passed',
-                    group: "group-a"
-                },
-                {
-                    id: nextItemId++,
-                    name: 'goodbye',
-                    lastResult: 'failed',
-                    group: "group-a"
-                },
-                {
-                    id: nextItemId++,
-                    name: 'go back home',
-                    lastResult: 'unknown',
-                    group: "group-b"
-                }
-            ]
+            cases: []
         }
+    },
+    mounted: function () {
+        var self = this // critical!
+        $.get('/cases', function (data) {
+            self.cases = data
+        })
     },
     methods: {
         create: function () {
-            this.cases.append({
-                id: nextItemId++,
-                name: 'new one'
+            this.cases.unshift({
+                path: 'default',
+                name: '*new_case',
             })
         }
     }
