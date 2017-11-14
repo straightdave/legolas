@@ -5,6 +5,7 @@
         <p><input id="path" type="text" v-model="caseInfo.path"></input></p>
         <p><input id="name" type="text" v-model="caseInfo.name"></input></p>
         <p><input id="desc" type="text" v-model="caseInfo.desc"></input></p>
+        <button v-on:click="saveCase">Save</button>
     </div>
     <div id="nav-in-case">
         <ul>
@@ -85,6 +86,9 @@ var AppDetail = Vue.extend({
             return this.actions !== null && this.actions.length > 0
         },
         hasCurrentAction: function () {
+            if (!this.hasActions) {
+                this.currentAction = {}
+            }
             return this.currentAction.name !== undefined
         }
     },
@@ -100,7 +104,7 @@ var AppDetail = Vue.extend({
                 name: "newaction"
             })
         },
-        save() {
+        saveCase() {
             alert('save')
         }
     }
