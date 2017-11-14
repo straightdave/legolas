@@ -3,7 +3,10 @@
 <div class="case" @click="$emit('view-case', name)">
     <div class="case-inner">
         <span class="case-title">
-            <span v-if="lastResult == 'passed'" class="green">
+            <span v-if="isNew" class="yellow">
+                <i class="fa fa-circle"></i>
+            </span>
+            <span v-else class="green">
                 <i class="fa fa-check"></i>
             </span>
             {{ name }}
@@ -24,8 +27,8 @@ export default {
     data() {
         return {
             name: this.case.name,
-            lastResult: 'passed',
             path: this.case.path,
+            isNew: this.case.isNew
         }
     }
 }
@@ -39,6 +42,10 @@ div.case {
 
 .green {
     color: #00B140;
+}
+.yellow {
+    font-size: small;
+    color: #4AACF2;
 }
 
 div.case-inner {

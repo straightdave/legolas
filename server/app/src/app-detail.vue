@@ -64,6 +64,7 @@ var AppDetail = Vue.extend({
                 name: this.caseInfo.name,
                 desc: this.caseInfo.desc
             },
+            isNew: this.caseInfo.isNew,
             activeTab: 0,
             actions: [],
             currentAction: {},
@@ -71,7 +72,8 @@ var AppDetail = Vue.extend({
     },
     watch: {
         // watch prop:caseInfo
-        // probably caused by user selecting another case in the list
+        // since we use local copy of prop here,
+        // this change is only caused by user selecting another case in the list
         caseInfo: function (newCaseInfo) {
             console.log('prop:caseInfo changed. new name: ' + newCaseInfo.name)
 
@@ -79,6 +81,7 @@ var AppDetail = Vue.extend({
             this.localCaseInfo.path = newCaseInfo.path
             this.localCaseInfo.name = newCaseInfo.name
             this.localCaseInfo.desc = newCaseInfo.desc
+            this.isNew = newCaseInfo.isNew
 
             var self = this
             var url = `/case/${encodeURI(self.caseInfo.path)}/${encodeURI(self.caseInfo.name)}/actions`
@@ -107,11 +110,20 @@ var AppDetail = Vue.extend({
         },
         addNewAction: function () {
             this.actions.push({
-                name: "newaction"
+                name: "action-new"
             })
         },
         saveCase() {
-            console.log('new case name: ' + this.localCaseInfo.name + ', old: ' + this.caseInfo.name)
+            if (this.isNew) {
+                console.log('create new case')
+                $.post("/cases", JSON.stringify(this.localCaseInfo), function (data) {
+                    console.log(JSON.stringify(data))
+                    this.isNew = false
+                }, "json")
+            }
+            else {
+                console.log('not new')
+            }
         }
     }
 })

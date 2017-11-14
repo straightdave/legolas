@@ -38,10 +38,15 @@ export default {
     },
     methods: {
         create: function () {
-            this.cases.unshift({
+            var newOne = {
                 path: 'default',
-                name: '*new_case',
-            })
+                name: 'case-new',
+                desc: 'new case',
+                isNew: true
+            }
+            this.cases.unshift(newOne)
+            // pop-up event to parent, let new case content show in panel
+            this.$emit('case-clicked', newOne)
         }
     }
 }
