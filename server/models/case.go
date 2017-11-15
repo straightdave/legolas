@@ -47,6 +47,33 @@ func FindCase(path, name string) (result *Case, err error) {
 	return
 }
 
+func (c *Case) UpdateTo(newCase *Case) (err error) {
+	session, err := mgo.Dial("localhost")
+	if err != nil {
+		return
+	}
+	defer session.Close()
+
+	// update all actions if necessary
+	if c.FullName() != newCase.FullName() {
+		err = UpdateActionOwner(c.Name, c.Path, newCase.Name, newCase.Path)
+		if err != nil {
+			return
+		}
+	}
+
+	col := session.DB("legolas").C("cases")
+
+	// delete old one
+	err = col.Remove(bson.M{"path": c.Path, "name": c.Name})
+	if err != nil {
+		return
+	}
+
+	// save new one
+	return col.Insert(*newCase)
+}
+
 func (c *Case) Save() error {
 	session, err := mgo.Dial("localhost")
 	if err != nil {
@@ -73,6 +100,8 @@ func DeleteCase(path, name string) error {
 		return err
 	}
 	defer session.Close()
+
+	// TODO: need to remove all actions as well
 
 	col := session.DB("legolas").C("cases")
 	return col.Remove(bson.M{"path": path, "name": name})

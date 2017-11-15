@@ -1,10 +1,14 @@
 <!-- app action panel -->
 <template>
-<div id="action-panel" v-if="actionObject">
-    <div><input type="text" v-model="actionObject.name"></input></div>
-    <div><input type="text" v-model="actionObject.desc"></input></div>
+<div id="action-panel" v-if="localActionObject">
+    <div><input type="text" v-model="localActionObject.name" placeholder="Action name"></input></div>
+    <div><input type="text" v-model="localActionObject.desc" placeholder="Desc goes here..."></input></div>
     <div id="snippet">
-        <textarea v-model="actionObject.snippet" rows="25" placeholder="Snippet..."></textarea>
+        <textarea v-model="localActionObject.snippet" rows="25" placeholder="Snippet..."></textarea>
+    </div>
+    <div>
+        <button v-on:click="saveAction">Save</button>
+        <button v-on:click="deleteAction">Delete</button>
     </div>
 </div>
 </template>
@@ -18,9 +22,45 @@ var AppActionPanel = Vue.extend({
             required: true
         }
     },
+    data() {
+        return {
+            localActionObject: {
+                name: this.actionObject.name,
+                desc: this.actionObject.desc,
+                snippet: this.actionObject.snippet
+            },
+            isNew: this.actionObject.isNew
+        }
+    },
     watch: {
+        // caused by use selecting another action in the list
         actionObject: function (newActionObject) {
             console.log('changed to ' + newActionObject.name)
+
+            this.localActionObject.name = newActionObject.name
+            this.localActionObject.desc = newActionObject.desc
+            this.localActionObject.snippet = newActionObject.snippet
+            this.isNew = newActionObject.isNew
+        }
+    },
+    methods: {
+        saveAction: function () {
+            if (this.isNew) {
+                console.log('save new action')
+                $.post('/actions', JSON.stringify(localActionObject), function (resp) {
+                    console.log('success create action: ' + JSON.stringify(resp))
+                    this.isNew = false
+                }, "json")
+            }
+            else {
+                console.log('save existing action')
+            }
+            this.$emit('action-list-refresh-needed')
+        },
+        deleteAction: function () {
+            console.log('to delete this action')
+
+            this.$emit('action-list-refresh-needed')
         }
     }
 })
@@ -38,12 +78,11 @@ div#action-panel > div {
     margin-bottom: 10px;
 }
 div#action-panel input[type="text"]
- {
+{
     font-size: 15px;
     padding:3px;
     width: 200px;
-    border: solid 2px #ececec;
-    background-color: #fff;
+    border: none;
 }
 div#action-panel textarea {
     font-size: 16px;
@@ -51,5 +90,15 @@ div#action-panel textarea {
     border: solid 2px #ececec;
     width: 100%;
     min-width: 500px;
+}
+
+div#action-panel button {
+    height: 35px;
+    font-size: 15px;
+    font-weight: 200;
+    width: 80px;
+    border: none;
+    background-color: #ececec;
+    cursor: pointer;
 }
 </style>

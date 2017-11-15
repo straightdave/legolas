@@ -1,12 +1,12 @@
+<!-- search/filter input -->
 <template>
 <div class="search-wrapper">
-    <input type="text" v-model="word" placeholder="Search">
+    <input type="text" v-model="word" placeholder="Filter">
     <button v-on:click.stop.prevent="go"><i class="fa fa-search"></i></button>
 </div>
 </template>
 
 <script>
-
 export default {
     data() {
         return {
@@ -19,7 +19,6 @@ export default {
         }
     }
 }
-
 </script>
 
 <style scoped>

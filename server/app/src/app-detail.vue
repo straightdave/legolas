@@ -23,13 +23,17 @@
                     v-for="a in actions"
                     :key="a.name"
                     :action="a"
-                    @actionClicked="viewAction(a.name)"
+                    @actionClicked="setCurrentAction(a)"
                 />
                 <div id="newaction" v-on:click="addNewAction">
                     <i class="fa fa-plus-square"></i>&nbsp;new
                 </div>
             </div>
-            <AppActionPanel v-if="hasCurrentAction" :action-object="currentAction"></AppActionPanel>
+            <AppActionPanel
+                v-if="hasCurrentAction"
+                :action-object="currentAction"
+                @action-list-refresh-needed="refreshActionList"
+            />
         </div>
         <div v-else-if="activeTab == 1">
             viriables
@@ -59,6 +63,7 @@ var AppDetail = Vue.extend({
     },
     data() {
         return {
+            // data that will change in this page
             localCaseInfo: {
                 path: this.caseInfo.path,
                 name: this.caseInfo.name,
@@ -77,16 +82,22 @@ var AppDetail = Vue.extend({
         caseInfo: function (newCaseInfo) {
             console.log('prop:caseInfo changed. new name: ' + newCaseInfo.name)
 
-            // update local. will discard unsaved local changes
+            // update local variables. will discard unsaved local changes
             this.localCaseInfo.path = newCaseInfo.path
             this.localCaseInfo.name = newCaseInfo.name
             this.localCaseInfo.desc = newCaseInfo.desc
             this.isNew = newCaseInfo.isNew
+            this.currentAction = {}
 
             var self = this
             var url = `/case/${encodeURI(self.caseInfo.path)}/${encodeURI(self.caseInfo.name)}/actions`
             $.get(url, function (data) {
-                self.actions = data
+                if (data && data.length > 0) {
+                    self.actions = data
+                }
+                else {
+                    self.actions = []
+                }
             })
         }
     },
@@ -102,16 +113,36 @@ var AppDetail = Vue.extend({
         }
     },
     methods: {
-        cliTab: function (item) {
+        cliTab(item) {
             this.activeTab = item
         },
-        viewAction: function (name) {
-            this.currentAction = { name: name }
+        setCurrentAction(act) {
+            console.log('set current action to: ' + act.name)
+            this.currentAction = act
         },
-        addNewAction: function () {
+        addNewAction() {
+            console.log('add action at tail')
             this.actions.push({
-                name: "action-new"
+                name: "action-new",
+                desc: "this is a new action.",
+                snippet: "",
+                isNew: true
             })
+        },
+        refreshActionList() {
+            console.log('refreshing action list')
+            // retrieve the actions again
+            var self = this
+            var url = `/case/${encodeURI(self.caseInfo.path)}/${encodeURI(self.caseInfo.name)}/actions`
+            $.get(url, function (data) {
+                if (data && data.length > 0) {
+                    self.actions = data
+                }
+                else {
+                    self.actions = []
+                }
+            })
+            // don't change the current action
         },
         saveCase() {
             if (this.isNew) {
@@ -122,13 +153,24 @@ var AppDetail = Vue.extend({
                 }, "json")
             }
             else {
-                console.log('not new')
+                console.log('update existing one')
+                var oldCaseUrl = `/case/${encodeURI(this.caseInfo.path)}/${encodeURI(this.caseInfo.name)}`
+                $.ajax({
+                    url: oldCaseUrl,
+                    type: 'PUT',
+                    data: JSON.stringify(this.localCaseInfo),
+                    success: function (resp) {
+                        console.log(JSON.stringify(resp))
+                    },
+                    error: function (resp) {
+                        console.log(JSON.stringify(resp))
+                    }
+                })
             }
         }
     }
 })
 export default AppDetail
-
 </script>
 
 <style scoped>
@@ -215,6 +257,4 @@ div#newaction {
     color: #ececec;
     border: solid 2px #ececec;
 }
-
-
 </style>

@@ -1,9 +1,9 @@
-<!-- item -->
+<!-- case listed item -->
 <template>
 <div class="case" @click="$emit('view-case', name)">
     <div class="case-inner">
         <span class="case-title">
-            <span v-if="isNew" class="yellow">
+            <span v-if="isNew" class="newitem">
                 <i class="fa fa-circle"></i>
             </span>
             <span v-else class="green">
@@ -43,7 +43,7 @@ div.case {
 .green {
     color: #00B140;
 }
-.yellow {
+.newitem {
     font-size: small;
     color: #4AACF2;
 }
