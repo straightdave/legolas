@@ -117,17 +117,20 @@ var AppDetail = Vue.extend({
             this.activeTab = item
         },
         setCurrentAction(act) {
-            console.log('set current action to: ' + act.name)
+            console.log('set current action to: ' + JSON.stringify(act))
             this.currentAction = act
         },
         addNewAction() {
-            console.log('add action at tail')
-            this.actions.push({
+            var newAction = {
+                cpath: this.caseInfo.path,
+                cname: this.caseInfo.name,
                 name: "action-new",
                 desc: "this is a new action.",
                 snippet: "",
                 isNew: true
-            })
+            }
+            console.log('add action at list: ' + JSON.stringify(newAction))
+            this.actions.push(newAction)
         },
         refreshActionList() {
             console.log('refreshing action list')

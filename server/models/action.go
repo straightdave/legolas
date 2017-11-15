@@ -22,15 +22,23 @@ func NewAction(cpath, cname, name string) *Action {
 	return &Action{CasePath: cpath, CaseName: cname, Name: name}
 }
 
+func FindAction(cname, cpath, name string) (result Action, err error) {
+	session, err := mgo.Dial("localhost")
+	if err != nil {
+		return
+	}
+	defer session.Close()
+	err = session.DB("legolas").C("actions").Find(bson.M{"case_name": cname, "case_path": cpath, "name": name}).One(&result)
+	return
+}
+
 func FindActions(cname, cpath string) (result []Action, err error) {
 	session, err := mgo.Dial("localhost")
 	if err != nil {
 		return nil, err
 	}
 	defer session.Close()
-
-	col := session.DB("legolas").C("actions")
-	err = col.Find(bson.M{"case_name": cname, "case_path": cpath}).All(&result)
+	err = session.DB("legolas").C("actions").Find(bson.M{"case_name": cname, "case_path": cpath}).All(&result)
 	return
 }
 
@@ -40,21 +48,42 @@ func FindAllActions() (result []Action, err error) {
 		return nil, err
 	}
 	defer session.Close()
-
-	col := session.DB("legolas").C("actions")
-	err = col.Find(nil).All(&result)
+	err = session.DB("legolas").C("actions").Find(nil).All(&result)
 	return
 }
 
-func (a *Action) Save() error {
+func (a *Action) Save() (err error) {
 	session, err := mgo.Dial("localhost")
 	if err != nil {
-		return err
+		return
+	}
+	defer session.Close()
+	col := session.DB("legolas").C("actions")
+	err = col.Insert(*a)
+	return
+}
+
+func (a *Action) UpdateTo(newAction *Action) (err error) {
+	session, err := mgo.Dial("localhost")
+	if err != nil {
+		return
+	}
+	defer session.Close()
+
+	_, err = session.DB("legolas").C("actions").Upsert(bson.M{"case_path": a.CasePath, "case_name": a.CaseName, "name": a.Name}, *newAction)
+	return
+}
+
+func DeleteAction(cpath, cname, name string) (err error) {
+	session, err := mgo.Dial("localhost")
+	if err != nil {
+		return
 	}
 	defer session.Close()
 
 	col := session.DB("legolas").C("actions")
-	return col.Insert(*a)
+	err = col.Remove(bson.M{"case_path": cpath, "case_name": cname, "name": name})
+	return
 }
 
 func UpdateActionOwner(cname, cpath, newName, newPath string) (err error) {

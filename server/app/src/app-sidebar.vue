@@ -1,7 +1,9 @@
 <!-- case list -->
 <template>
 <div id="app-sidebar">
-    <app-search></app-search>
+    <app-search
+        @do-filter="doFiltering"
+    />
     <div class="titlebar">
         <span>My Cases</span>
         <a id="create" v-on:click.stop.prevent="create"><i class="fa fa-plus"></i></a>
@@ -47,6 +49,25 @@ export default {
             this.cases.unshift(newOne)
             // pop-up event to parent, let new case content show in panel
             this.$emit('case-clicked', newOne)
+        },
+        doFiltering(word) {
+            console.log('go filter: [' + word + ']')
+            if (word === "") {
+                // refresh case list to all
+                var self = this
+                $.get('/cases', function (data) {
+                    console.log('got and set the case list to all')
+                    self.cases = data
+                })
+            }
+            else {
+                // parse and do the filtering
+                var url = `/cases/f/${encodeURI(word)}`
+                $.get(url, function (data) {
+                    console.log('got filtered result')
+                    self.cases = data
+                })
+            }
         }
     }
 }

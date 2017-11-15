@@ -14,6 +14,7 @@
 </template>
 
 <script>
+import $ from 'jquery'
 
 var AppActionPanel = Vue.extend({
     props: {
@@ -25,6 +26,8 @@ var AppActionPanel = Vue.extend({
     data() {
         return {
             localActionObject: {
+                cpath: this.actionObject.cpath,
+                cname: this.actionObject.cname,
                 name: this.actionObject.name,
                 desc: this.actionObject.desc,
                 snippet: this.actionObject.snippet
@@ -37,6 +40,8 @@ var AppActionPanel = Vue.extend({
         actionObject: function (newActionObject) {
             console.log('changed to ' + newActionObject.name)
 
+            this.localActionObject.cpath = newActionObject.cpath
+            this.localActionObject.cname = newActionObject.cname
             this.localActionObject.name = newActionObject.name
             this.localActionObject.desc = newActionObject.desc
             this.localActionObject.snippet = newActionObject.snippet
@@ -47,7 +52,14 @@ var AppActionPanel = Vue.extend({
         saveAction: function () {
             if (this.isNew) {
                 console.log('save new action')
-                $.post('/actions', JSON.stringify(localActionObject), function (resp) {
+                var data = {
+                    case_path: this.localActionObject.cpath,
+                    case_name: this.localActionObject.cname,
+                    name: this.localActionObject.name,
+                    desc: this.localActionObject.desc,
+                    snippet: this.localActionObject.snippet
+                }
+                $.post('/actions', JSON.stringify(data), function (resp) {
                     console.log('success create action: ' + JSON.stringify(resp))
                     this.isNew = false
                 }, "json")

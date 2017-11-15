@@ -1,8 +1,8 @@
 <!-- search/filter input -->
 <template>
 <div class="search-wrapper">
-    <input type="text" v-model="word" placeholder="Filter">
-    <button v-on:click.stop.prevent="go"><i class="fa fa-search"></i></button>
+    <input type="text" v-model.trim="word" placeholder="Filter">
+    <button v-on:click="$emit('do-filter', word)"><i class="fa fa-search"></i></button>
 </div>
 </template>
 
@@ -11,11 +11,6 @@ export default {
     data() {
         return {
             word: ""
-        }
-    },
-    methods: {
-        go: function () {
-            alert(this.word)
         }
     }
 }

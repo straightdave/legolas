@@ -5,6 +5,7 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
 	"legolas/server/models"
+	"net/url"
 )
 
 type Server struct{}
@@ -14,6 +15,21 @@ func (server *Server) Run() {
 	m := martini.Classic()
 	m.Use(martini.Static("server/public"))
 	m.Use(render.Renderer())
+
+	m.Get("/cases/f/:word", func(p martini.Params, r render.Render) {
+		word, err := url.QueryUnescape(p["word"])
+		if err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+			return
+		}
+
+		cases, err := models.FilterCases(word)
+		if err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, cases)
+		}
+	})
 
 	m.Get("/cases", func(r render.Render) {
 		cases, err := models.FindAllCases()
@@ -78,6 +94,7 @@ func (server *Server) Run() {
 		}
 	})
 
+	// get all actions of a case
 	m.Get("/case/:path/:name/actions", func(p martini.Params, r render.Render) {
 		actions, err := models.FindActions(p["name"], p["path"])
 		if err != nil {
@@ -87,17 +104,51 @@ func (server *Server) Run() {
 		}
 	})
 
+	// get one action of a case
+	m.Get("/case/:cpath/:cname/:name", func(p martini.Params, r render.Render) {
+		action, err := models.FindAction(p["cname"], p["cpath"], p["name"])
+		if err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, action)
+		}
+	})
+
 	// add a new action to a case
 	m.Post("/actions", binding.Json(models.Action{}), func(a models.Action, ferr binding.Errors, r render.Render) {
 		if ferr.Count() > 0 {
 			r.JSON(200, Ex{"error": "binding action post data failed"})
+			return
+		}
+
+		if err := a.Save(); err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
 		} else {
-			a0 := models.NewAction(a.CasePath, a.CaseName, a.Name)
-			if err := a0.Save(); err != nil {
-				r.JSON(200, Ex{"error": err.Error()})
-			} else {
-				r.JSON(200, *a0)
-			}
+			r.JSON(200, a)
+		}
+	})
+
+	// update an action
+	m.Put("/case/:cpath/:cname/:name", binding.Json(models.Action{}), func(newAction models.Action, p martini.Params, ferr binding.Errors, r render.Render) {
+		if ferr.Count() > 0 {
+			r.JSON(200, Ex{"error": "binding action post data failed"})
+			return
+		}
+
+		a0 := models.NewAction(p["cpath"], p["cname"], p["name"])
+		if err := a0.UpdateTo(&newAction); err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, newAction)
+		}
+	})
+
+	m.Delete("/case/:cpath/:cname/:name", func(p martini.Params, r render.Render) {
+		err := models.DeleteAction(p["cpath"], p["cname"], p["name"])
+		if err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, Ex{"ok": "deleted"})
 		}
 	})
 
