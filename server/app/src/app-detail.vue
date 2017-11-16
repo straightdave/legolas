@@ -5,7 +5,10 @@
         <p><input id="path" type="text" v-model="localCaseInfo.path"></input></p>
         <p><input id="name" type="text" v-model="localCaseInfo.name"></input></p>
         <p><input id="desc" type="text" v-model="localCaseInfo.desc"></input></p>
-        <button v-on:click="saveCase">Save</button>
+        <div id="buttons">
+            <button v-on:click="saveCase">Save</button>
+            <button v-on:click="runCase">Run</button>
+        </div>
     </div>
     <div id="nav-in-case">
         <ul>
@@ -165,6 +168,25 @@ var AppDetail = Vue.extend({
                     }
                 })
             }
+        },
+        runCase() {
+            if (this.isNew) {
+                alert('cannot run an unsaved case')
+                console.log('cannot run an unsaved case')
+                return
+            }
+
+            console.log('to run case: ' + this.caseInfo.name)
+            var url = `/runs`
+            var self = this
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: data,
+                success: function (resp) {
+                    console.log('success: add case into run-queue: ' + JSON.stringify(resp))
+                }
+            })
         }
     }
 })
@@ -198,7 +220,13 @@ input#name {
     font-weight: 300;
 }
 
-div#detail-header button {
+div#buttons {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
+
+div#detail-header div#buttons button{
     height: 30px;
     width: 60px;
     font-size: 15px;
@@ -206,9 +234,6 @@ div#detail-header button {
     border: none;
     background-color: #00B140;
     color: #fff;
-    position: absolute;
-    right: 10px;
-    top: 5px;
     cursor: pointer;
 }
 
