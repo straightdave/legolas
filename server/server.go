@@ -84,6 +84,16 @@ func (server *Server) Run() {
 		}
 	})
 
+	// create a case run of one case
+	m.Post("/case/:path/:name/runs", func(p martini.Params, r render.Render) {
+		cr, err := models.NewCaseRun(&models.Case{Path: p["path"], Name: p["name"]})
+		if err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, cr)
+		}
+	})
+
 	// delete a case
 	m.Delete("/case/:path/:name", func(p martini.Params, r render.Render) {
 		err := models.DeleteCase(p["path"], p["name"])
@@ -101,6 +111,16 @@ func (server *Server) Run() {
 			r.JSON(200, Ex{"error": err.Error()})
 		} else {
 			r.JSON(200, actions)
+		}
+	})
+
+	// get all runs of a case
+	m.Get("/case/:path/:name/runs", func(p martini.Params, r render.Render) {
+		runs, err := models.FindCaseRuns(p["path"], p["name"])
+		if err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, runs)
 		}
 	})
 

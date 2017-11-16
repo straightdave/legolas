@@ -42,7 +42,9 @@
             viriables
         </div>
         <div v-else-if="activeTab == 2">
-            Runs
+            <AppRunInfo
+                :case-info="this.caseInfo"
+            />
         </div>
         <div v-else-if="activeTab == 3">
             Data tracing
@@ -54,10 +56,11 @@
 <script>
 import AppAction from './app-action.vue'
 import AppActionPanel from './app-action-panel.vue'
+import AppRunInfo from './app-run-info.vue'
 import $ from 'jquery'
 
 var AppDetail = Vue.extend({
-    components: {AppAction, AppActionPanel},
+    components: {AppAction, AppActionPanel, AppRunInfo},
     props: {
         caseInfo: {
             type: Object,
@@ -177,12 +180,11 @@ var AppDetail = Vue.extend({
             }
 
             console.log('to run case: ' + this.caseInfo.name)
-            var url = `/runs`
+            var url = `/case/${encodeURI(this.caseInfo.path)}/${encodeURI(this.caseInfo.name)}/runs`
             var self = this
             $.ajax({
                 url: url,
                 type: 'POST',
-                data: data,
                 success: function (resp) {
                     console.log('success: add case into run-queue: ' + JSON.stringify(resp))
                 }
