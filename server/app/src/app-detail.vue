@@ -87,18 +87,7 @@ var AppDetail = Vue.extend({
             this.localCaseInfo.name = newCaseInfo.name
             this.localCaseInfo.desc = newCaseInfo.desc
             this.isNew = newCaseInfo.isNew
-            this.currentAction = {}
-
-            var self = this
-            var url = `/case/${encodeURI(self.caseInfo.path)}/${encodeURI(self.caseInfo.name)}/actions`
-            $.get(url, function (data) {
-                if (data && data.length > 0) {
-                    self.actions = data
-                }
-                else {
-                    self.actions = []
-                }
-            })
+            this.refreshActionList(true)
         }
     },
     computed: {
@@ -112,6 +101,9 @@ var AppDetail = Vue.extend({
             return this.currentAction.name !== undefined
         }
     },
+    mounted() {
+        this.refreshActionList(true)
+    },
     methods: {
         cliTab(item) {
             this.activeTab = item
@@ -122,8 +114,8 @@ var AppDetail = Vue.extend({
         },
         addNewAction() {
             var newAction = {
-                cpath: this.caseInfo.path,
-                cname: this.caseInfo.name,
+                case_path: this.caseInfo.path,
+                case_name: this.caseInfo.name,
                 name: "action-new",
                 desc: "this is a new action.",
                 snippet: "",
@@ -132,7 +124,7 @@ var AppDetail = Vue.extend({
             console.log('add action at list: ' + JSON.stringify(newAction))
             this.actions.push(newAction)
         },
-        refreshActionList() {
+        refreshActionList(toCloseActionPanel) {
             console.log('refreshing action list')
             // retrieve the actions again
             var self = this
@@ -145,7 +137,10 @@ var AppDetail = Vue.extend({
                     self.actions = []
                 }
             })
-            // don't change the current action
+
+            if (toCloseActionPanel) {
+                self.currentAction = {}
+            }
         },
         saveCase() {
             if (this.isNew) {

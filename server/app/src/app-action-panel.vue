@@ -26,8 +26,8 @@ var AppActionPanel = Vue.extend({
     data() {
         return {
             localActionObject: {
-                cpath: this.actionObject.cpath,
-                cname: this.actionObject.cname,
+                case_path: this.actionObject.case_path,
+                case_name: this.actionObject.case_name,
                 name: this.actionObject.name,
                 desc: this.actionObject.desc,
                 snippet: this.actionObject.snippet
@@ -38,10 +38,10 @@ var AppActionPanel = Vue.extend({
     watch: {
         // caused by use selecting another action in the list
         actionObject: function (newActionObject) {
-            console.log('changed to ' + newActionObject.name)
+            console.log('changed to ' + JSON.stringify(newActionObject))
 
-            this.localActionObject.cpath = newActionObject.cpath
-            this.localActionObject.cname = newActionObject.cname
+            this.localActionObject.case_path = newActionObject.case_path
+            this.localActionObject.case_name = newActionObject.case_name
             this.localActionObject.name = newActionObject.name
             this.localActionObject.desc = newActionObject.desc
             this.localActionObject.snippet = newActionObject.snippet
@@ -50,29 +50,59 @@ var AppActionPanel = Vue.extend({
     },
     methods: {
         saveAction: function () {
+            var self = this
             if (this.isNew) {
                 console.log('save new action')
-                var data = {
-                    case_path: this.localActionObject.cpath,
-                    case_name: this.localActionObject.cname,
-                    name: this.localActionObject.name,
-                    desc: this.localActionObject.desc,
-                    snippet: this.localActionObject.snippet
-                }
-                $.post('/actions', JSON.stringify(data), function (resp) {
-                    console.log('success create action: ' + JSON.stringify(resp))
-                    this.isNew = false
+                $.post('/actions', JSON.stringify(self.localActionObject), function (resp) {
+                    console.log('response: ' + JSON.stringify(resp))
+                    if (resp.error) {
+                        console.log('error happened')
+                        self.isNew = true
+                    }
+                    else {
+                        console.log('save new succeeded')
+                        self.isNew = false
+
+                        // refresh action list and close current action panel
+                        self.$emit('action-list-refresh-needed', true)
+                    }
                 }, "json")
             }
             else {
                 console.log('save existing action')
+                // TODO
             }
-            this.$emit('action-list-refresh-needed')
         },
         deleteAction: function () {
-            console.log('to delete this action')
+            if (this.isNew) {
+                console.log('delete a new (unsafed) action')
+                // refresh action list and close current action panel
+                this.$emit('action-list-refresh-needed', true)
+                return
+            }
 
-            this.$emit('action-list-refresh-needed')
+            var cpath = this.actionObject.case_path
+            var cname = this.actionObject.case_name
+            var name = this.actionObject.name
+            console.log(`delete action: ${cpath}/${cname}#${name}`)
+            var url = `/case/${encodeURI(cpath)}/${encodeURI(cname)}/${encodeURI(name)}`
+            var self = this
+            $.ajax({
+                url: url,
+                type: 'DELETE',
+                success: function (data) {
+                    console.log('resp: ' + JSON.stringify(data))
+                    if (data.error) {
+                        console.log('error')
+                        // TODO: leave error messages somewhere on page
+                    }
+                    else {
+                        console.log('succeeded')
+                        // refresh list and close current action panel
+                        self.$emit('action-list-refresh-needed', true)
+                    }
+                }
+            })
         }
     }
 })

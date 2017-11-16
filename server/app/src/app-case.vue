@@ -1,8 +1,8 @@
 <!-- case listed item -->
 <template>
-<div class="case" @click="$emit('view-case', name)">
-    <div class="case-inner">
-        <span class="case-title">
+<div id="case" @click="$emit('view-case', name)">
+    <div id="case-inner">
+        <span id="case-title">
             <span v-if="isNew" class="newitem">
                 <i class="fa fa-circle"></i>
             </span>
@@ -11,7 +11,7 @@
             </span>
             {{ name }}
         </span>
-        <span class="case-group">$/{{ path }}</span>
+        <span id="case-group">$/{{ path }}</span>
     </div>
 </div>
 </template>
@@ -35,7 +35,7 @@ export default {
 </script>
 
 <style scoped>
-div.case {
+div#case {
     width: 100%;
     margin-top: 5px;
 }
@@ -48,7 +48,7 @@ div.case {
     color: #4AACF2;
 }
 
-div.case-inner {
+div#case-inner {
     height: 100px;
     background-color: #fff;
     border-left: solid 10px #00B140;
@@ -58,13 +58,13 @@ div.case-inner {
     position: relative;
 }
 
-span.case-title {
+span#case-title {
     display: block;
     font-size: 20px;
     overflow: hidden;
 }
 
-span.case-group {
+span#case-group {
     display: block;
     position: absolute;
     left: 10px;

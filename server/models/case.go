@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"strings"
+	// "strings"
 )
 
 type Case struct {
@@ -42,28 +42,30 @@ func FindAllCases() (result []Case, err error) {
 	then, if no such case, treat whole part as path, to list all cases in it
 */
 func FilterCases(word string) (result []Case, err error) {
-	session, err := mgo.Dial("localhost")
-	if err != nil {
-		return nil, err
-	}
-	defer session.Close()
-	col := session.DB("legolas").C("cases")
+	// session, err := mgo.Dial("localhost")
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// defer session.Close()
+	// col := session.DB("legolas").C("cases")
 
-	if strings.HasPrefix(word, `$/`) {
-		word = strings.TrimPrefix(word, `$/`)
-		splits := strings.Split(word, `/`)
+	// if strings.HasPrefix(word, `$/`) {
+	// 	word = strings.TrimPrefix(word, `$/`)
+	// 	splits := strings.Split(word, `/`)
 
-		n := len(splits)
-		if n > 1 {
-			last := splits[len(splits)-1:]
+	// 	n := len(splits)
+	// 	if n > 1 {
+	// 		last := splits[len(splits)-1:]
+	// 		path := strings.TrimSuffix(word, last)
+	// 		path = strings.TrimSuffix(path, `/`)
 
-		} else { // n==1
+	// 	} else { // n==1
 
-		}
+	// 	}
 
-	} else {
-		err = col.Find(bson.M{"name": bson.RegEx{word, ""}}).All(&result)
-	}
+	// } else {
+	// 	err = col.Find(bson.M{"name": bson.RegEx{word, ""}}).All(&result)
+	// }
 
 	return
 }

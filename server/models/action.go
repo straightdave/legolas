@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -59,8 +60,17 @@ func (a *Action) Save() (err error) {
 	}
 	defer session.Close()
 	col := session.DB("legolas").C("actions")
-	err = col.Insert(*a)
-	return
+
+	n, err := col.Find(bson.M{"case_path": a.CasePath, "case_name": a.CaseName, "name": a.Name}).Count()
+	if err != nil {
+		return
+	}
+
+	if n > 0 {
+		return errors.New("duplicated action with same full name: " + a.FullName())
+	}
+
+	return col.Insert(*a)
 }
 
 func (a *Action) UpdateTo(newAction *Action) (err error) {
