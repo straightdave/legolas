@@ -98,7 +98,7 @@ var AppDetail = Vue.extend({
     },
     computed: {
         hasActions: function () {
-            return this.actions !== null && this.actions.length > 0
+            return this.actions && this.actions.length > 0
         },
         hasCurrentAction: function () {
             if (!this.hasActions) {
@@ -232,7 +232,6 @@ div#detail-header div#buttons button{
     height: 30px;
     width: 60px;
     font-size: 15px;
-    font-weight: 200;
     border: none;
     background-color: #00B140;
     color: #fff;
@@ -251,7 +250,6 @@ div#nav-in-case ul li {
 }
 
 div#nav-in-case ul li a {
-    font-weight: 300;
     text-decoration: none;
     color: gray;
     cursor: pointer;

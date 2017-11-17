@@ -53,7 +53,6 @@ nav ul li {
 }
 
 nav ul li a {
-    font-weight: 300;
     text-decoration: none;
     color: gray;
     cursor: pointer;

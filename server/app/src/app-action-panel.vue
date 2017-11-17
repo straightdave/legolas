@@ -137,7 +137,6 @@ div#action-panel textarea {
 div#action-panel button {
     height: 35px;
     font-size: 15px;
-    font-weight: 200;
     width: 80px;
     border: none;
     background-color: #ececec;

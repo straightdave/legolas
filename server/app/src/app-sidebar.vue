@@ -89,7 +89,6 @@ div.titlebar {
 div.titlebar span {
     display: inline-block;
     margin-right: 10px;
-    font-weight: 400;
     padding-bottom: 8px;
 }
 

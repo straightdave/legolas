@@ -51,11 +51,9 @@ div#action {
 
 div#titlebar span#name {
     font-size: 20px;
-    font-weight: 200;
 }
 div#titlebar span#desc {
     font-size: small;
     color: gray;
-    font-weight: 200;
 }
 </style>
