@@ -32,20 +32,26 @@
                     <i class="fa fa-plus-square"></i>&nbsp;new
                 </div>
             </div>
+            <AppActionStore
+                v-if="isNew && !hasShownStore"
+            />
             <AppActionPanel
                 v-if="hasCurrentAction"
                 :action-object="currentAction"
                 @action-list-refresh-needed="refreshActionList"
             />
         </div>
+
         <div v-else-if="activeTab == 1">
             viriables
         </div>
+
         <div v-else-if="activeTab == 2">
             <AppRunInfo
                 :case-info="this.caseInfo"
             />
         </div>
+
         <div v-else-if="activeTab == 3">
             Data tracing
         </div>
@@ -57,6 +63,7 @@
 import AppAction from './app-action.vue'
 import AppActionPanel from './app-action-panel.vue'
 import AppRunInfo from './app-run-info.vue'
+import AppActionStore from './app-action-store.vue'
 import $ from 'jquery'
 
 var AppDetail = Vue.extend({
@@ -69,13 +76,10 @@ var AppDetail = Vue.extend({
     },
     data() {
         return {
-            // data that will change in this page
-            localCaseInfo: {
-                path: this.caseInfo.path,
-                name: this.caseInfo.name,
-                desc: this.caseInfo.desc
-            },
+            localCaseInfo: JSON.parse(JSON.stringify(this.caseInfo)),
             isNew: this.caseInfo.isNew,
+
+            hasShownStore: false,
             activeTab: 0,
             actions: [],
             currentAction: {},
@@ -86,12 +90,8 @@ var AppDetail = Vue.extend({
         // since we use local copy of prop here,
         // this change is only caused by user selecting another case in the list
         caseInfo: function (newCaseInfo) {
-            console.log('prop:caseInfo changed. new name: ' + newCaseInfo.name)
-
-            // update local variables. will discard unsaved local changes
-            this.localCaseInfo.path = newCaseInfo.path
-            this.localCaseInfo.name = newCaseInfo.name
-            this.localCaseInfo.desc = newCaseInfo.desc
+            console.log('user click the case: ' + newCaseInfo.name)
+            this.localCaseInfo = JSON.parse(JSON.stringify(newCaseInfo))
             this.isNew = newCaseInfo.isNew
             this.refreshActionList(true)
         }
@@ -150,10 +150,11 @@ var AppDetail = Vue.extend({
         },
         saveCase() {
             if (this.isNew) {
-                console.log('create new case')
-                $.post("/cases", JSON.stringify(this.localCaseInfo), function (data) {
+                console.log('saving new case')
+                var self = this
+                $.post("/cases", JSON.stringify(self.localCaseInfo), function (data) {
                     console.log(JSON.stringify(data))
-                    this.isNew = false
+                    self.isNew = false
                 }, "json")
             }
             else {
@@ -179,6 +180,7 @@ var AppDetail = Vue.extend({
                 return
             }
 
+            // use
             console.log('to run case: ' + this.caseInfo.name)
             var url = `/case/${encodeURI(this.caseInfo.path)}/${encodeURI(this.caseInfo.name)}/runs`
             var self = this
