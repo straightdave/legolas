@@ -23,7 +23,10 @@ package job
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/fzzy/radix/extra/pool"
+	L "log"
+
+	"legolas/common/config"
 )
 
 type Job struct {
@@ -33,18 +36,57 @@ type Job struct {
 	ActionName string `json:"action_name"`
 }
 
-// Unmarshal bytes into a job struct
-func JobFromJson(data []byte) (job *Job, err error) {
-	err = json.Unmarshal(data, job)
-	return
+var redisPool *pool.Pool
+
+func init() {
+	var err error
+	redisPool, err = pool.NewPool("tcp", config.RedisHost, config.RedisPoolSize)
+	if err != nil {
+		L.Fatalf("Cannot create Redis pool at %s: %v\n", config.RedisHost, err)
+	}
 }
 
-// Marshal a job struct into bytes
 func (job *Job) Json() ([]byte, error) {
 	return json.Marshal(*job)
 }
 
-// Get job ID: <case_run_id>__<job_name>
-func (job *Job) JobID() string {
-	return fmt.Sprintf("%s__%s", job.CaseRunID, job.Name)
+func (job *Job) JsonPretty() ([]byte, error) {
+	return json.MarshalIndent(*job, "", "    ")
+}
+
+func FromJson(content []byte) (job Job, err error) {
+	err = json.Unmarshal(content, &job)
+	return
+}
+
+// Pop up a job from the queue
+// Blocking if no job in the queue
+func Pop() (job Job, err error) {
+	rc, err := redisPool.Get()
+	if err != nil {
+		return
+	}
+	defer redisPool.Put(rc)
+
+	data, err := rc.Cmd("BLPOP", config.Queue, 0).List()
+	if err != nil {
+		return
+	}
+
+	return FromJson([]byte(data[1]))
+}
+
+// Append a job to the queue's tail
+func Append(job *Job) (err error) {
+	rc, err := redisPool.Get()
+	if err != nil {
+		return
+	}
+	defer redisPool.Put(rc)
+
+	data, err := job.Json()
+	if err != nil {
+		return
+	}
+	return rc.Cmd("RPUSH", config.Queue, string(data)).Err
 }

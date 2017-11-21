@@ -4,9 +4,6 @@ Test case run: running state of a test case
 package run
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"time"
@@ -15,7 +12,6 @@ import (
 	"legolas/common/helpers"
 	"legolas/common/models/action"
 	"legolas/common/models/job"
-	"legolas/common/models/testcase"
 )
 
 type Run struct {
@@ -52,26 +48,20 @@ func NewRun(cpath, cname string) (r Run, err error) {
 		return
 	}
 
-	// TODO: fix job proxy code
-	jp := &job.JobProxy{
-		Queue: config.Queue,
-	}
-
 	// push actions into queue
 	for _, act := range acts {
-		j := job.Job{
-			CaseRunID:  runId,
+		j := &job.Job{
+			CaseRunID:  r.Id,
 			CasePath:   cpath,
 			CaseName:   cname,
 			ActionName: act.Name,
 		}
 
-		err = jp.Append(j)
+		err = job.Append(j)
 		if err != nil {
 			return
 		}
 	}
-
 	return
 }
 
@@ -82,17 +72,6 @@ func (r *Run) Save() (err error) {
 	}
 	defer session.Close()
 
-	// save run item first
 	_, err = session.DB("legolas").C("runs").Upsert(bson.M{"id": r.Id, "case_path": r.CasePath, "case_name": r.CaseName}, *r)
 	return
-}
-
-func GetRunsInOrder(cpath, cname string) (result []Run) {
-	session, err := mgo.Dial(config.MongoHost)
-	if err != nil {
-		return
-	}
-	defer session.Close()
-
-	err = session.DB("legolas").C("runs").Find(bson.M{"case_path": cpath, "case_name": cname}).Sort(...)
 }
