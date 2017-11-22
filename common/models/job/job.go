@@ -1,5 +1,6 @@
 /*
 Job: an action QUEUED and needs to be run.
+Job is the only entity that stores in Redis (queue) currently (20171122)
 
 When clients trigger one case run, it will:
 1) generate case run id (unique)
@@ -23,8 +24,8 @@ package job
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/fzzy/radix/extra/pool"
-	L "log"
 
 	"legolas/common/config"
 )
@@ -34,16 +35,13 @@ type Job struct {
 	CasePath   string `json:"case_path"`
 	CaseName   string `json:"case_name"`
 	ActionName string `json:"action_name"`
+	PrevAction string `json:"prev_action"`
 }
 
 var redisPool *pool.Pool
 
-func init() {
-	var err error
-	redisPool, err = pool.NewPool("tcp", config.RedisHost, config.RedisPoolSize)
-	if err != nil {
-		L.Fatalf("Cannot create Redis pool at %s: %v\n", config.RedisHost, err)
-	}
+func SetRedisPool(p *pool.Pool) {
+	redisPool = p
 }
 
 func (job *Job) Json() ([]byte, error) {
@@ -56,6 +54,31 @@ func (job *Job) JsonPretty() ([]byte, error) {
 
 func FromJson(content []byte) (job Job, err error) {
 	err = json.Unmarshal(content, &job)
+	return
+}
+
+func (job *Job) Id() string {
+	return fmt.Sprintf("%s__%s", job.CaseRunID, job.ActionName)
+}
+
+// show queue
+func View() (result []Job, err error) {
+	rc, err := redisPool.Get()
+	if err != nil {
+		return
+	}
+	defer redisPool.Put(rc)
+
+	data, err := rc.Cmd("LRANGE", config.Queue, 0, -1).List()
+	if err != nil {
+		return
+	}
+
+	result = []Job{}
+	for _, item := range data {
+		j, _ := FromJson([]byte(item))
+		result = append(result, j)
+	}
 	return
 }
 
@@ -73,6 +96,7 @@ func Pop() (job Job, err error) {
 		return
 	}
 
+	// data[0] is col name
 	return FromJson([]byte(data[1]))
 }
 

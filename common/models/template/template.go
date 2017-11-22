@@ -25,6 +25,30 @@ func (tpl *Template) JsonPretty() ([]byte, error) {
 	return json.MarshalIndent(*tpl, "", "    ")
 }
 
+func FromJson(content []byte) (tpl Template, err error) {
+	tpl.Params = make(map[string]map[string]interface{}) // in case not initialized
+	err = json.Unmarshal(content, &tpl)
+	if err != nil {
+		return
+	}
+
+	if !tpl.isValid() {
+		err = errors.New("template loaded is invalid.")
+	}
+
+	return
+}
+
+func GetTemplates(path string) (result []Template, err error) {
+	session, err := mgo.Dial(config.MongoHost)
+	if err != nil {
+		return
+	}
+	defer session.Close()
+	err = session.DB("legolas").C("templates").Find(bson.M{"path": path}).All(&result)
+	return
+}
+
 func GetTemplate(path, name string) (result Template, err error) {
 	session, err := mgo.Dial(config.MongoHost)
 	if err != nil {
@@ -41,10 +65,11 @@ func (tpl *Template) isValid() bool {
 
 func NewTemplate(path, name, desc string) Template {
 	return Template{
-		Path:   path,
-		Name:   name,
-		Desc:   desc,
-		Params: make(map[string]map[string]interface{}),
+		Path:    path,
+		Name:    name,
+		Desc:    desc,
+		Params:  make(map[string]map[string]interface{}),
+		Snippet: "",
 	}
 }
 

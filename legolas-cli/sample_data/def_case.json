@@ -1,0 +1,9 @@
+{
+    "path": "$case/path",
+    "name": "case-1",
+    "desc": "this is a test case",
+    "params": {
+        "name": "dave",
+        "age": 18
+    }
+}

@@ -59,6 +59,12 @@ func NewAction(cpath, cname, name string) Action {
 	}
 }
 
+func FromJson(content []byte) (act Action, err error) {
+	act.Params = make(map[string]interface{}) // in case not initialized
+	err = json.Unmarshal(content, &act)
+	return
+}
+
 func (a *Action) ApplyTemplate(tpath, tname string) (err error) {
 	a.TemplatePath = tpath
 	a.TemplateName = tname
@@ -94,6 +100,17 @@ func GetActions(cpath, cname string) (result []Action, err error) {
 	defer session.Close()
 
 	err = session.DB("legolas").C("actions").Find(bson.M{"case_path": cpath, "case_name": cname}).All(&result)
+	return
+}
+
+func GetAction(cpath, cname, name string) (result Action, err error) {
+	session, err := mgo.Dial(config.MongoHost)
+	if err != nil {
+		return
+	}
+	defer session.Close()
+
+	err = session.DB("legolas").C("actions").Find(bson.M{"case_path": cpath, "case_name": cname, "name": name}).One(&result)
 	return
 }
 

@@ -2,74 +2,102 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	M "legolas/common/models"
 	L "log"
 	"os/exec"
-	"strings"
+
+	"legolas/common/config"
+	"legolas/common/helpers"
+	A "legolas/common/models/action"
+	J "legolas/common/models/job"
 )
 
-func handle(job *M.Job) {
-	L.Printf("Get job: [\n%v\n]\n", *job)
+func handle(job *J.Job) {
+	jid := job.Id()
+	L.Printf("Handler: get job id:[%s]\n", jid)
 
-	r, err := redisPool.Get()
+	// get action data by job info
+	act, err := A.GetAction(job.CasePath, job.CaseName, job.ActionName)
 	if err != nil {
-		L.Printf("cannot get a redis connection from pool: %v\n", err)
+		L.Printf("[%s] failed to get action data: %v\n", jid, err)
 		return
 	}
-	defer redisPool.Put(r)
 
-	js := &M.JobStateProxy{Id: job.JobID(), Rc: r}
+	// create job state
+	js := J.NewJobState(job.CaseRunID, job.ActionName, job.CasePath, job.CaseName)
+	if err := js.Save(); err != nil {
+		L.Printf("[%s] failed to create job state: %v\n", jid, err)
+		return
+	}
 
 	// if any panic happens in this func, mark it failed.
 	defer func() {
 		if p := recover(); p != nil {
-			js.Fail(p.(error).Error())
+			js.State = "failed"
+			js.Error = p.(error).Error()
+			if err := js.Save(); err != nil {
+				L.Printf("[%s] panic in panic: failed to set job state as failed: %v\n", jid, err)
+			}
 		}
 	}()
 
-	// check previous action state
-	if job.PreAction != "" {
-		jsPrev := &M.JobStateProxy{Id: job.PrevJobID(), Rc: r}
-		switch jsPrev.State() {
-		case "done": // go on
+	// check previous action
+	if job.PrevAction != "" {
+		prevActionState, err := J.GetJobState(job.CaseRunID, job.PrevAction)
+		if err != nil {
+			L.Printf("[%s] failed to get previous job state: %v\n", jid, err)
+			return
+		}
+
+		switch prevActionState.State {
+		case "done": // continue
 			break
-		case "failed": // just discard and mark as failed
-			js.Fail(fmt.Sprintf("Aborted due to previous Job [%s] was failed.", jsPrev.Id))
+		case "failed", "aborted": // just discard and mark as aborted
+			js.State = "aborted"
+			js.Error = fmt.Sprintf("previous job [%s] is in the state failed/aborted", job.PrevAction)
+			if err := js.Save(); err != nil {
+				L.Printf("[%s] failed to set job state: %v\n", jid, err)
+			}
 			return
 		default: // postpone
-			L.Printf("previous job [%s] is not done yet. append to queue.\n", jsPrev.Id)
-			jp := &M.JobProxy{Queue: *queueName, Rc: r}
-			jp.Append(job)
+			L.Printf("[%s] previous job [%s] is not done yet. append to queue.\n", jid, job.PrevAction)
+			if err := J.Append(job); err != nil {
+				L.Printf("[%s] failed to postpone job: %v\n", jid, err)
+			}
 			return
 		}
 	}
 
-	// mark as in-progress. discard job if this fails.
-	if err := js.InProgress(); err != nil {
-		L.Printf("failed to set job as in-progress: %v\n", err)
+	// save snippet to local file
+	// the file name would be <run_id>__<action name>__<random suffix>.py
+	fn := fmt.Sprintf("%s/%s__%s__%s.py", config.ScriptHive, job.CaseRunID, job.ActionName, helpers.RandSuffix4())
+	if err := helpers.GenScript(fn, act.Snippet); err != nil {
+		L.Printf("[%s] cannot create snippet file [%s]: %v\n", jid, fn, err)
 		return
 	}
 
-	// save snippet to local temp file
-	fn := fmt.Sprintf("%s__%s.py", job.JobID(), RandSuffix4())
-	err = ioutil.WriteFile(fn, []byte(strings.Trim(job.Snippet, "\n ")), 0755)
+	// execute script, collecting outputs
+	// context is job (in json)
+	ctx, err := job.Json()
 	if err != nil {
-		L.Printf("cannot create snippet file: %v\n", err)
-		js.Fail(err.Error())
+		L.Printf("[%s] failed to serialize job as script context (json): %v\n", jid, err)
 		return
 	}
-	// defer os.Remove(fn)
 
-	// execute snippet, collecting outputs
-	cmd := exec.Command("python", fn)
+	ctxStr := string(ctx)
+	L.Printf("[%s] run script:[%s] with ctx:[%s]\n", jid, fn, ctxStr)
+
+	cmd := exec.Command("python", fn, ctxStr)
 	cmdOut, err := cmd.CombinedOutput()
 	if err != nil {
-		L.Printf("cannot run and get output of process: %v\n", err)
-		js.Fail(err.Error())
+		L.Printf("[%s] cannot run and get output of process: %v\n", jid, err)
 		return
 	}
+	L.Println(">>> " + string(cmdOut))
 
-	js.Done()
-	js.AppendLog(string(cmdOut))
+	// complete job run
+	js.Output = string(cmdOut)
+	js.State = "done"
+	if err := js.Save(); err != nil {
+		L.Printf("[%s] failed to set job state to done: %v\n", jid, err)
+	}
 }

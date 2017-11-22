@@ -23,11 +23,12 @@ dependencies:
 3) action results are saved in redis:
    * key: <case_run_id>#<action_name>, value: number/text (redis types)
 
-4) input context:
+4) input context (job):
    * case_path
    * case_name
    * action_name
    * case_run_id
+   * prev_action name
 """
 
 class Legolas:
@@ -57,12 +58,12 @@ class Legolas:
     def _set_param_of_action(self):
         col = self._mongo.legolas.actions
         t = col.find_one({"case_path": self.case_path, "case_name": self.case_name, "name": self.action_name})
-        if t: self._param_in_action = t.params
+        if t: self._param_in_action = t["params"]
 
     def _set_param_of_case(self):
         col = self._mongo.legolas.cases
         t = col.find_one({"path": self.case_path, "name": self.case_name})
-        if t: self._param_in_case = t.params
+        if t: self._param_in_case = t["params"]
 
     def _set_prev_results(self):
         if self.prev_action:

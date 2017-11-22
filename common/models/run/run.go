@@ -1,9 +1,10 @@
 /*
-Test case run: running state of a test case
+Test case run: running info of a test case
 */
 package run
 
 import (
+	"encoding/json"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"time"
@@ -15,13 +16,41 @@ import (
 )
 
 type Run struct {
-	Id        string    `json:"id" bson:"id"`
+	Id        string    `json:"case_run_id" bson:"case_run_id"`
 	CasePath  string    `json:"case_path" bson:"case_path"`
 	CaseName  string    `json:"case_name" bson:"case_name"`
 	StartedAt time.Time `json:"started_at" bson:"started_at"`
 	EndedAt   time.Time `json:"ended_at" bson:"ended_at"`
 }
 
+func (r *Run) JsonPretty() ([]byte, error) {
+	return json.MarshalIndent(*r, "", "    ")
+}
+
+func GetRuns(cpath, cname string) (result []Run, err error) {
+	session, err := mgo.Dial(config.MongoHost)
+	if err != nil {
+		return
+	}
+	defer session.Close()
+
+	err = session.DB("legolas").C("runs").Find(bson.M{"case_path": cpath, "case_name": cname}).All(&result)
+	return
+}
+
+func GetRun(id string) (result Run, err error) {
+	session, err := mgo.Dial(config.MongoHost)
+	if err != nil {
+		return
+	}
+	defer session.Close()
+
+	err = session.DB("legolas").C("runs").Find(bson.M{"case_run_id": id}).One(&result)
+	return
+}
+
+// create a test case run:
+// push all actions into job queue
 func NewRun(cpath, cname string) (r Run, err error) {
 	r = Run{
 		Id:        helpers.RandStringRunes(config.RunIdLength),
@@ -49,22 +78,28 @@ func NewRun(cpath, cname string) (r Run, err error) {
 	}
 
 	// push actions into queue
+	// Order matters!
+	prevAct := ""
 	for _, act := range acts {
 		j := &job.Job{
 			CaseRunID:  r.Id,
 			CasePath:   cpath,
 			CaseName:   cname,
 			ActionName: act.Name,
+			PrevAction: prevAct,
 		}
 
 		err = job.Append(j)
 		if err != nil {
 			return
 		}
+
+		prevAct = act.Name
 	}
 	return
 }
 
+// update in mongo. no effect on redis queue
 func (r *Run) Save() (err error) {
 	session, err := mgo.Dial(config.MongoHost)
 	if err != nil {
@@ -72,6 +107,6 @@ func (r *Run) Save() (err error) {
 	}
 	defer session.Close()
 
-	_, err = session.DB("legolas").C("runs").Upsert(bson.M{"id": r.Id, "case_path": r.CasePath, "case_name": r.CaseName}, *r)
+	_, err = session.DB("legolas").C("runs").Upsert(bson.M{"case_run_id": r.Id, "case_path": r.CasePath, "case_name": r.CaseName}, *r)
 	return
 }

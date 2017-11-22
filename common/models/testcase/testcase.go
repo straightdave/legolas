@@ -40,8 +40,25 @@ func NewTestCase(path, name, desc string) TestCase {
 	}
 }
 
+func FromJson(content []byte) (ca TestCase, err error) {
+	ca.Params = make(map[string]interface{}) // in case not initialized
+	err = json.Unmarshal(content, &ca)
+	return
+}
+
 func (c *TestCase) AddParam(pname string, pvalue interface{}) {
 	c.Params[pname] = pvalue
+}
+
+func GetTestCases(path string) (result []TestCase, err error) {
+	session, err := mgo.Dial(config.MongoHost)
+	if err != nil {
+		return
+	}
+	defer session.Close()
+
+	err = session.DB("legolas").C("cases").Find(bson.M{"path": path}).All(&result)
+	return
 }
 
 func GetTestCase(path, name string) (result TestCase, err error) {

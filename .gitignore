@@ -1,10 +1,17 @@
 # ignore bin files
 legolas
-action_runner/action_runner
+legolas-runner/legolas-runner
+legolas-cli/legolas-cli
 
 # ignore logs
 log/**
 **/*.log
+
+# ignore custom scripts
+legolas-runner/hive/*.py
+
+# ignore pyc
+**/*.pyc
 
 # ignore .DS_Store
 **/.DS_Store
