@@ -8,6 +8,7 @@ log/**
 **/*.log
 
 # ignore custom scripts
+legolas-runner/hive/*.py
 legolas-runner/hive/*.pyc
 
 # ignore .DS_Store
