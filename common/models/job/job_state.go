@@ -16,7 +16,6 @@ import (
 	"encoding/json"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"time"
 
 	"legolas/common/config"
 )
@@ -32,9 +31,9 @@ type JobState struct {
 	State     string                 `json:"state" bson:"state"`
 	Error     string                 `json:"error" bson:"error"`
 	Output    string                 `json:"output" bson:"output"`
-	Results   map[string]interface{} `json:"results" bson:"results"` // set by python
-	StartedAt time.Time              `json:"started_at" bson:"started_at"`
-	EndedAt   time.Time              `json:"ended_at" bson:"ended_at"`
+	Results   map[string]interface{} `json:"results" bson:"results"`       // updated by python
+	StartedAt string                 `json:"started_at" bson:"started_at"` // updated by python
+	EndedAt   string                 `json:"ended_at" bson:"ended_at"`     // updated by python
 }
 
 func NewJobState(caseRunId, actionName, cpath, cname string) JobState {
@@ -51,6 +50,7 @@ func (js *JobState) JsonPretty() ([]byte, error) {
 	return json.MarshalIndent(*js, "", "    ")
 }
 
+// for test purpose
 func (js *JobState) AddResult(name string, value interface{}) {
 	js.Results[name] = value
 }

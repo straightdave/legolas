@@ -8,16 +8,18 @@ import (
 
 var harness_before = `
 import sys
-import time
 from legolas import Legolas
 `
 
 var harness_after = `
 if __name__ == "__main__":
     ctx = Legolas(sys.argv[1])
-    ctx.save_result('started_at', time.ctime())
+    ctx._set_start_time()
+
     action_main(ctx)
-    ctx.save_result('ended_at', time.ctime())
+
+    ctx._set_end_time()
+    ctx._upload_results()
 `
 
 func GenScript(fileName, snippet string) error {

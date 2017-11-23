@@ -88,11 +88,20 @@ func handle(job *J.Job) {
 
 	cmd := exec.Command("python", fn, ctxStr)
 	cmdOut, err := cmd.CombinedOutput()
+	// if there's error here, just show the stderr
 	L.Printf("[%s] %s\n", jid, cmdOut)
 
 	// complete job run
+	// re-fetch the job state to update
+	js, err = J.GetJobState(job.CaseRunID, job.ActionName)
+	if err != nil {
+		L.Printf("[%s] cannot re-fetch job state: %v\n", err)
+		return
+	}
+
 	js.Output = string(cmdOut)
 	js.State = "done"
+
 	if err := js.Save(); err != nil {
 		L.Printf("[%s] failed to set job state to done: %v\n", jid, err)
 	}
