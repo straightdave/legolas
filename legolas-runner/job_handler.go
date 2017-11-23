@@ -88,11 +88,7 @@ func handle(job *J.Job) {
 
 	cmd := exec.Command("python", fn, ctxStr)
 	cmdOut, err := cmd.CombinedOutput()
-	if err != nil {
-		L.Printf("[%s] cannot run and get output of process: %v\n", jid, err)
-		return
-	}
-	L.Println(">>> " + string(cmdOut))
+	L.Printf("[%s] %s\n", jid, cmdOut)
 
 	// complete job run
 	js.Output = string(cmdOut)

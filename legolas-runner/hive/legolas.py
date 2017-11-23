@@ -5,7 +5,6 @@
 import json
 import re
 
-# pre-installed packages
 from pymongo import MongoClient
 import redis
 
@@ -82,7 +81,9 @@ class Legolas:
         """search in action param first, then if in format of '$(xxx)', search case's params"""
         if self._param_in_action.has_key(name):
             p = self._param_in_action[name]
-            matchObj = re.match(r'^\$\((.*)\)$', p)
+            print("get param:name=" + str(p))
+
+            matchObj = re.match(r'^\$\((.*)\)$', str(p))
             if matchObj:
                 pname = matchObj.group(1)
                 if self._param_in_case.has_key(pname):
