@@ -9,11 +9,13 @@ import (
 )
 
 type TestCase struct {
-	Id     bson.ObjectId          `json:"_id" bson:"_id"`
-	Path   string                 `json:"path" bson:"path"`
-	Name   string                 `json:"name" bson:"name"`
-	Desc   string                 `json:"desc" bson:"desc"`
-	Params map[string]interface{} `json:"params" bson:"params"`
+	Id       bson.ObjectId          `json:"_id" bson:"_id"`
+	Path     string                 `json:"path" bson:"path"`
+	Name     string                 `json:"name" bson:"name"`
+	Desc     string                 `json:"desc" bson:"desc"`
+	Params   map[string]interface{} `json:"params" bson:"params"`
+	Disabled bool                   `json:"disabled" bson:"disabled"`
+	Removed  bool                   `json:"removed" bson:"removed"`
 }
 
 func (tc *TestCase) Json() ([]byte, error) {
@@ -25,6 +27,8 @@ func (tc *TestCase) JsonPretty() ([]byte, error) {
 }
 
 func FromJson(content []byte) (tc TestCase, err error) {
+	// in this case, the Id is blank
+	// so in Save()/Delete() we should check about Id
 	err = json.Unmarshal(content, &tc)
 	return
 }

@@ -1,7 +1,0 @@
-{
-    "case_path": "$case/path",
-    "case_name": "case-2",
-    "name": "action-2",
-    "template_path": "$template/path",
-    "template_name": "tpl-2"
-}

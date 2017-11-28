@@ -4,12 +4,12 @@ legolas-runner/legolas-runner
 legolas-cli/legolas-cli
 
 # ignore logs
-log/**
+log/
 **/*.log
 
 # ignore custom scripts
 legolas-runner/hive/*.py
-legolas-runner/hive/*.pyc
+**/*.pyc
 
 # ignore .DS_Store
 **/.DS_Store

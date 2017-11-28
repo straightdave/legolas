@@ -1,0 +1,20 @@
+{
+    "path": "$template/built-in",
+    "name": "api call",
+    "desc": "make Api call",
+    "params": {
+        "host": {
+            "type": "text",
+            "required": true
+        },
+        "url": {
+            "type": "text",
+            "required": true
+        },
+        "method": {
+            "type": "text",
+            "required": true,
+            "default": "GET"
+        }
+    }
+}

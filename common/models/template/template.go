@@ -12,6 +12,7 @@ type Template struct {
 	Desc    string                            `json:"desc" bson:"desc"`
 	Params  map[string]map[string]interface{} `json:"params" bson:"params"`
 	Snippet string                            `json:"snippet" bson:"snippet"`
+	Removed bool                              `json:"removed" bson:"removed"`
 }
 
 func (tpl *Template) Json() ([]byte, error) {

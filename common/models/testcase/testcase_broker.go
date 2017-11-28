@@ -1,6 +1,7 @@
 package testcase
 
 import (
+	"errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
@@ -22,16 +23,17 @@ func getMongo() *S.Mongo {
 }
 
 func GetAll(path string) (result []TestCase, err error) {
-	err = col.Find(bson.M{"path": path}).All(&result)
+	err = col.Find(bson.M{"path": path, "removed": false}).All(&result)
 	return
 }
 
 func GetOne(path, name string) (result TestCase, err error) {
-	err = col.Find(bson.M{"path": path, "name": name}).One(&result)
+	err = col.Find(bson.M{"path": path, "name": name, "removed": false}).One(&result)
 	return
 }
 
 func GetOneById(id bson.ObjectId) (result TestCase, err error) {
+	// even the deleted one
 	err = col.Find(bson.M{"_id": id}).One(&result)
 	return
 }
@@ -52,5 +54,12 @@ func (tc *TestCase) Save() (err error) {
 }
 
 func (tc *TestCase) Delete() (err error) {
-	return col.Remove(bson.M{"_id": tc.Id})
+	if !tc.Id.Valid() {
+		err = errors.New("Test case Id is invalid")
+		return
+	}
+
+	tc.Removed = true
+	_, err = col.Upsert(bson.M{"_id": tc.Id}, *tc)
+	return
 }

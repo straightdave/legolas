@@ -19,4 +19,5 @@ func TestObjectId(t *testing.T) {
 	var d bson.ObjectId
 	// comparable with blank string
 	fmt.Println(d == "")
+	fmt.Println(d.Valid())
 }

@@ -1,6 +1,7 @@
 package template
 
 import (
+	"errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
@@ -23,12 +24,12 @@ func getMongo() *S.Mongo {
 }
 
 func GetAll(path string) (result []Template, err error) {
-	err = col.Find(bson.M{"path": path}).All(&result)
+	err = col.Find(bson.M{"path": path, "removed": false}).All(&result)
 	return
 }
 
 func GetOne(path, name string) (result Template, err error) {
-	err = col.Find(bson.M{"path": path, "name": name}).One(&result)
+	err = col.Find(bson.M{"path": path, "name": name, "removed": false}).One(&result)
 	return
 }
 
@@ -45,10 +46,20 @@ func New() (tpl *Template) {
 }
 
 func (tpl *Template) Save() (err error) {
+	if !tpl.Id.Valid() {
+		tpl.Id = bson.NewObjectId()
+	}
 	_, err = col.Upsert(bson.M{"_id": tpl.Id}, *tpl)
 	return
 }
 
 func (tpl *Template) Delete() (err error) {
-	return col.Remove(bson.M{"_id": tpl.Id})
+	if !tpl.Id.Valid() {
+		err = errors.New("Template Id is invalid")
+		return
+	}
+
+	tpl.Removed = true
+	_, err = col.Upsert(bson.M{"_id": tpl.Id}, *tpl)
+	return
 }
