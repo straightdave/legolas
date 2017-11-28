@@ -1,0 +1,19 @@
+{
+    "path": "$template/path",
+    "name": "tpl-assertion",
+    "desc": "this is to make assertion.",
+    "params": {
+        "expected": {
+            "type": "text",
+            "required": true
+        },
+        "actual": {
+            "type": "text",
+            "required": true
+        },
+        "fail_msg": {
+            "type": "text",
+            "required": true
+        }
+    }
+}

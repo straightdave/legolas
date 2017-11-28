@@ -1,6 +1,5 @@
 /*
-Job: an action QUEUED and needs to be run.
-Job is the only entity that stores in Redis (queue) currently (20171122)
+Job: an action QUEUED and needs to be run
 
 When clients trigger one case run, it will:
 1) generate case run id (unique)
@@ -25,23 +24,13 @@ package job
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/fzzy/radix/extra/pool"
-
-	"legolas/common/config"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Job struct {
-	CaseRunID  string `json:"case_run_id"`
-	CasePath   string `json:"case_path"`
-	CaseName   string `json:"case_name"`
-	ActionName string `json:"action_name"`
-	PrevAction string `json:"prev_action"`
-}
-
-var redisPool *pool.Pool
-
-func SetRedisPool(p *pool.Pool) {
-	redisPool = p
+	RunId        bson.ObjectId `json:"run_id" bson:"run_id"`
+	ActionId     bson.ObjectId `json:"action_id" bson:"action_id"`
+	PrevActionId bson.ObjectId `json:"prev_action_id" bson:"prev_action_id"`
 }
 
 func (job *Job) Json() ([]byte, error) {
@@ -53,64 +42,10 @@ func (job *Job) JsonPretty() ([]byte, error) {
 }
 
 func FromJson(content []byte) (job Job, err error) {
-	err = json.Unmarshal(content, &job)
+	err = bson.UnmarshalJSON(content, &job)
 	return
 }
 
 func (job *Job) Id() string {
-	return fmt.Sprintf("%s__%s", job.CaseRunID, job.ActionName)
-}
-
-// show queue
-func View() (result []Job, err error) {
-	rc, err := redisPool.Get()
-	if err != nil {
-		return
-	}
-	defer redisPool.Put(rc)
-
-	data, err := rc.Cmd("LRANGE", config.Queue, 0, -1).List()
-	if err != nil {
-		return
-	}
-
-	result = []Job{}
-	for _, item := range data {
-		j, _ := FromJson([]byte(item))
-		result = append(result, j)
-	}
-	return
-}
-
-// Pop up a job from the queue
-// Blocking if no job in the queue
-func Pop() (job Job, err error) {
-	rc, err := redisPool.Get()
-	if err != nil {
-		return
-	}
-	defer redisPool.Put(rc)
-
-	data, err := rc.Cmd("BLPOP", config.Queue, 0).List()
-	if err != nil {
-		return
-	}
-
-	// data[0] is col name
-	return FromJson([]byte(data[1]))
-}
-
-// Append a job to the queue's tail
-func Append(job *Job) (err error) {
-	rc, err := redisPool.Get()
-	if err != nil {
-		return
-	}
-	defer redisPool.Put(rc)
-
-	data, err := job.Json()
-	if err != nil {
-		return
-	}
-	return rc.Cmd("RPUSH", config.Queue, string(data)).Err
+	return fmt.Sprintf("%s__%s", job.RunId.Hex(), job.ActionId.Hex())
 }

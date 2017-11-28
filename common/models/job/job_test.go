@@ -2,44 +2,36 @@ package job
 
 import (
 	"fmt"
-	"github.com/fzzy/radix/extra/pool"
+	"gopkg.in/mgo.v2/bson"
 	"testing"
-
-	"legolas/common/config"
 )
 
-func TestCreateJob(t *testing.T) {
-	p, err := pool.NewPool("tcp", config.RedisHost, 3)
-	if err != nil {
-		t.Fatalf("cannot init redis pool: %v\n", err)
-	}
-	SetRedisPool(p)
-
-	job := &Job{
-		CaseRunID:  "test-run-id",
-		CasePath:   "$case/path",
-		CaseName:   "case-1",
-		ActionName: "action-1",
+func TestMarshal(t *testing.T) {
+	j := &Job{
+		RunId:    bson.NewObjectId(),
+		ActionId: bson.NewObjectId(),
 	}
 
-	c, err := job.JsonPretty()
-	if err != nil {
-		t.Fatalf("cannot parse popped job: %v\n", err)
-	}
+	c, _ := j.Json()
 	fmt.Println(string(c))
 
-	if err := Append(job); err != nil {
-		t.Fatalf("cannot push new job: %v\n", err)
+	j2, _ := FromJson(c)
+
+	if j2.RunId != j.RunId {
+		fmt.Println("converting back is failed")
+		t.Fail()
 	}
 
-	job2, err := Pop()
-	if err != nil {
-		t.Fatalf("cannot pop job: %v\n", err)
+	fmt.Println(j2.RunId.Hex())
+}
+
+func TestCompareNil(t *testing.T) {
+	j := &Job{
+		RunId:    bson.NewObjectId(),
+		ActionId: bson.NewObjectId(),
 	}
 
-	c, err = job2.JsonPretty()
-	if err != nil {
-		t.Fatalf("cannot parse popped job: %v\n", err)
-	}
-	fmt.Println(string(c))
+	fmt.Printf("type of blank objectId is: %v\n", j.PrevActionId)
+
+	fmt.Println(j.PrevActionId == "")
 }

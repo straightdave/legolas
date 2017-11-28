@@ -102,21 +102,32 @@ class Legolas:
     def get_param(self, name):
         """search in action param first, then if in format of '$(xxx)', search case's params"""
         if self._param_in_action.has_key(name):
-            p = self._param_in_action[name]
-            print("get param:name=" + str(p))
+            if name:
+                p = self._param_in_action[name]
+                print("get param:{0}={1}".format(name, str(p)))
 
-            matchObj = re.match(r'^\$\((.*)\)$', str(p))
-            if matchObj:
-                pname = matchObj.group(1)
-                if self._param_in_case.has_key(pname):
-                    return self._param_in_case[pname]
-            else:
-                return p
+                matchObj = re.match(r'^\$\((.*)\)$', str(p))
+                if matchObj:
+                    pname = matchObj.group(1)
+                    if self._param_in_case.has_key(pname):
+                        return self._param_in_case[pname]
+                else:
+                    return p
 
     def save_result(self, name, value):
         if name:
             name = name.replace(".", "_")
+            print("save result:{0}={1}".format(name, str(value)))
             self._results_dict[name] = value
+
+    def set_failed(self, msg):
+        """set job as failed, along with error message"""
+        print("set job as failed")
+        col = self._mongo.legolas.jobstates
+        col.find_one_and_update(
+            {"case_run_id": self.case_run_id, "action_name": self.action_name},
+            {'$set': {'state': "failed", 'error': msg}})
+
 
 if __name__ == "__main__":
     print("don't run me. just import me.")

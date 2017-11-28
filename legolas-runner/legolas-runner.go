@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"github.com/fzzy/radix/extra/pool"
 	L "log"
@@ -9,56 +8,49 @@ import (
 	"os/signal"
 	"syscall"
 
-	"legolas/common/config"
-	"legolas/common/models/job"
-)
-
-var (
-	queueAddress = flag.String("q", config.RedisHost, "Redis instance address")
-	queueName    = flag.String("n", config.Queue, "Redis queue name")
-	logFile      = flag.String("l", config.RunnerLogFile, "Log file name")
+	C "legolas/common/config"
+	J "legolas/common/models/job"
 )
 
 func main() {
-	flag.Parse()
-
-	// set logger
-	logf, err := os.OpenFile(*logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile(C.RunnerLogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		fmt.Printf("Cannot access to log file: %s\n", *logFile)
+		fmt.Printf("Cannot access to log file: %s\n", C.RunnerLogFile)
 		os.Exit(1)
 	}
-	L.SetOutput(logf)
-	L.Println()
+	L.SetOutput(f)
 
-	// set redis pool
-	redisPool, err := pool.NewPool("tcp", *queueAddress, config.RedisPoolSize)
+	redisPool, err := pool.NewPool("tcp", C.RedisHost, C.RedisPoolSize)
 	if err != nil {
-		L.Fatalf("Cannot create Redis pool at: %s\n", *queueAddress)
+		L.Printf("Cannot initialize redis pool: %v\n", err)
+		f.Close()
+		os.Exit(1)
 	}
-	job.SetRedisPool(redisPool)
+	J.SetRedisPool(redisPool)
 
-	// set deferred cleanup
-	defer func() {
-		logf.Close()
+	cleanUp := func() {
+		f.Close()
 		redisPool.Empty()
-	}()
+	}
+	defer cleanUp()
 
 	// handling ctrl-c and TERM signals gracefully
-	c := make(chan os.Signal, 2)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	ch := make(chan os.Signal, 2)
+	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		<-c
-		L.Fatalln("legolas runner is interrupted.")
+		<-ch
+		L.Println("legolas runner is interrupted.")
+		cleanUp()
+		os.Exit(1)
 	}()
 
 	L.Println("legolas runner started")
 	for {
-		j, err := job.Pop()
+		job, err := J.Pop()
 		if err != nil {
 			L.Printf("failed to get job from the queue: %v\n", err)
 			continue
 		}
-		go handle(&j)
+		go handle(&job)
 	}
 }

@@ -1,0 +1,12 @@
+{
+    "case_path": "$case/path",
+    "case_name": "case-2",
+    "name": "action-3",
+    "template_path": "$template/path",
+    "template_name": "tpl-assertion",
+    "params": {
+        "expected": "dave",
+        "actual": "bradpete",
+        "fail_msg": "brad is not dave"
+    }
+}
