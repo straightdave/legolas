@@ -101,7 +101,7 @@ func showCommand(args []string) {
 		}
 
 		if len(acts) < 1 {
-			fmt.Printf("no cases found under cpath:[%s], cname:[%s]\n", cpath, cname)
+			fmt.Printf("no action found under cpath:[%s], cname:[%s]\n", cpath, cname)
 			break
 		}
 

@@ -59,5 +59,5 @@ func runCommand(args []string) {
 
 		prev = act.Id
 	}
-	fmt.Println("successfully created the test run: " + run.Id)
+	fmt.Println("successfully created the test run: " + run.Id.Hex())
 }

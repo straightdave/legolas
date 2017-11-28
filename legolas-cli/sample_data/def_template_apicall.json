@@ -1,6 +1,6 @@
 {
-    "path": "$template/built-in",
-    "name": "api call",
+    "path": "$template/samples",
+    "name": "apicall",
     "desc": "make Api call",
     "params": {
         "host": {
@@ -13,7 +13,7 @@
         },
         "method": {
             "type": "text",
-            "required": true,
+            "required": false,
             "default": "GET"
         }
     }

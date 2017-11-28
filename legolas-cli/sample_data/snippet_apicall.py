@@ -1,13 +1,10 @@
-#
-# Template snippet: RESTful API call
-#
 def action_main(ctx):
-    host    = ctx.get_param("host")
-    api_url = ctx.get_param("api_url")
-    method  = ctx.get_param("method")
-    body    = ctx.get_param("body")
+    import requests
+    host = ctx.get_param('host')
+    url  = ctx.get_param('url')
 
-    from python_http_client import Client
+    _api = "{0}{1}".format(host, url)
+    print("sending GET request to " + _api)
 
-
-
+    r = requests.get(_api)
+    ctx.save_result('response', r.text)

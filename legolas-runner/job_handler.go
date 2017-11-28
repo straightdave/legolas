@@ -82,7 +82,7 @@ func handle(job *J.Job) {
 	}
 
 	// generate script file
-	fn := fmt.Sprintf("%s/%s__%s__%s.py", C.ScriptHive, job.RunId, job.ActionId, H.RandSuffix4())
+	fn := fmt.Sprintf("%s/%s__%s__%s.py", C.ScriptHive, job.RunId.Hex(), job.ActionId.Hex(), H.RandSuffix4())
 	snippet, err := act.Snippet()
 	if err != nil {
 		L.Printf("[%s] failed to get snippet: %v\n", err)

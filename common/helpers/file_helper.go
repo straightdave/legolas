@@ -8,18 +8,21 @@ import (
 
 var harness_before = `
 import sys
-from legolas import Legolas
+from lib import legolas
 `
 
 var harness_after = `
 if __name__ == "__main__":
-    ctx = Legolas(sys.argv[1])
+    ctx = legolas.Legolas(sys.argv[1])
     ctx._set_start_time()
 
-    action_main(ctx)
-
-    ctx._set_end_time()
-    ctx._upload_results()
+    try:
+        action_main(ctx)
+        ctx._upload_results()
+    except:
+        print('Err: ' + str(sys.exc_info()))
+    else:
+        ctx._set_end_time()
 `
 
 func GenScript(fileName, snippet string) error {

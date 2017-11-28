@@ -9,6 +9,7 @@ import (
 	C "legolas/common/config"
 	A "legolas/common/models/action"
 	J "legolas/common/models/job"
+	R "legolas/common/models/run"
 	T "legolas/common/models/template"
 	TC "legolas/common/models/testcase"
 	S "legolas/common/storage"
@@ -32,6 +33,7 @@ func main() {
 	T.SetCol(mongo)
 	TC.SetCol(mongo)
 	A.SetCol(mongo)
+	R.SetCol(mongo)
 
 	subCommand := strings.ToLower(os.Args[1])
 	switch subCommand {

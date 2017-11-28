@@ -5,6 +5,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
+	TC "legolas/common/models/testcase"
 	S "legolas/common/storage"
 )
 
@@ -24,7 +25,12 @@ func getMongo() *S.Mongo {
 }
 
 func GetAll(cpath, cname string) (result []Action, err error) {
-	err = col.Find(bson.M{"case_path": cpath, "case_name": cname, "removed": false}).All(&result)
+	TC.SetCol(getMongo())
+	tc, err := TC.GetOne(cpath, cname)
+	if err != nil {
+		return
+	}
+	err = col.Find(bson.M{"case_id": tc.Id, "removed": false}).All(&result)
 	return
 }
 
@@ -34,7 +40,12 @@ func GetAllByCaseId(caseId bson.ObjectId) (result []Action, err error) {
 }
 
 func GetOne(cpath, cname, name string) (result Action, err error) {
-	err = col.Find(bson.M{"case_path": cpath, "case_name": cname, "name": name, "removed": false}).One(&result)
+	TC.SetCol(getMongo())
+	tc, err := TC.GetOne(cpath, cname)
+	if err != nil {
+		return
+	}
+	err = col.Find(bson.M{"case_id": tc.Id, "name": name, "removed": false}).One(&result)
 	return
 }
 
