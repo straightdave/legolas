@@ -54,6 +54,10 @@ func GetOneById(actionId bson.ObjectId) (result Action, err error) {
 	return
 }
 
+func CountByCase(caseId bson.ObjectId) (result int, err error) {
+	return col.Find(bson.M{"case_id": caseId, "removed": false}).Count()
+}
+
 func New() *Action {
 	return &Action{
 		Id:     bson.NewObjectId(),
@@ -66,6 +70,13 @@ func (a *Action) Save() (err error) {
 		if !a.Id.Valid() {
 			a.Id = bson.NewObjectId()
 		}
+
+		actCount, err := CountByCase(a.CaseId)
+		if err != nil {
+			return
+		}
+
+		a.SeqNo = actCount + 5
 		_, err = col.Upsert(bson.M{"_id": a.Id}, *a)
 	} else {
 		err = errors.New("Case Id or Template Id is invalid")

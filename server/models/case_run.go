@@ -10,7 +10,6 @@ import (
 	"github.com/fzzy/radix/extra/pool"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	C "legolas/common"
 	CM "legolas/common/models"
 	L "log"
 	"time"

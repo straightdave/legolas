@@ -4,8 +4,9 @@ import (
 	"github.com/codegangsta/martini-contrib/binding"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
-	"legolas/server/models"
 	"net/url"
+
+	"legolas/server/models"
 )
 
 type Server struct{}
