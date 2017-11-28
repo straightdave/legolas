@@ -112,7 +112,7 @@ func handle(job *J.Job) {
 		return
 	}
 	js2.Output = string(cmdOut)
-	if js2.State == "" {
+	if js2.State != "failed" && js2.State != "aborted" {
 		js2.State = "done"
 	}
 	if err := js2.Save(); err != nil {

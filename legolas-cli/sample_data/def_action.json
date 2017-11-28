@@ -1,9 +1,9 @@
 {
     "case_id": "5a1d211927508330e2f5acf2",
-    "name": "action-1",
+    "name": "action-2",
     "template_id": "5a1d20e927508330d7e3cf04",
     "params": {
-        "host": "http://smaple.com",
+        "host": "http://ppp.com",
         "url": "/api/test"
     }
 }
