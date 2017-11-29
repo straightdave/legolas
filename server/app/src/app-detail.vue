@@ -43,13 +43,11 @@
         </div>
 
         <div v-else-if="activeTab == 1">
-            viriables
+            <AppCaseVariable :case-info="this.caseInfo" />
         </div>
 
         <div v-else-if="activeTab == 2">
-            <AppRunInfo
-                :case-info="this.caseInfo"
-            />
+            <AppRunInfo :case-info="this.caseInfo" />
         </div>
 
         <div v-else-if="activeTab == 3">
@@ -60,14 +58,16 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import AppAction from './app-action.vue'
 import AppActionPanel from './app-action-panel.vue'
 import AppRunInfo from './app-run-info.vue'
 import AppActionStore from './app-action-store.vue'
+import AppCaseVariable from './app-case-variable.vue'
 import $ from 'jquery'
 
 var AppDetail = Vue.extend({
-    components: {AppAction, AppActionPanel, AppRunInfo},
+    components: {AppAction, AppActionPanel, AppRunInfo, AppCaseVariable},
     props: {
         caseInfo: {
             type: Object,
@@ -132,9 +132,8 @@ var AppDetail = Vue.extend({
         },
         refreshActionList(toCloseActionPanel) {
             console.log('refreshing action list')
-            // retrieve the actions again
             var self = this
-            var url = `/case/${encodeURI(self.caseInfo.path)}/${encodeURI(self.caseInfo.name)}/actions`
+            var url = `/case/${encodeURI(self.caseInfo._id)}/actions`
             $.get(url, function (data) {
                 if (data && data.length > 0) {
                     self.actions = data
@@ -180,9 +179,8 @@ var AppDetail = Vue.extend({
                 return
             }
 
-            // use
             console.log('to run case: ' + this.caseInfo.name)
-            var url = `/case/${encodeURI(this.caseInfo.path)}/${encodeURI(this.caseInfo.name)}/runs`
+            var url = `/case/${encodeURI(this.caseInfo._id)}/runs`
             var self = this
             $.ajax({
                 url: url,

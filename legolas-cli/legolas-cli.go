@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/fzzy/radix/extra/pool"
 	"os"
 	"strings"
 
-	C "legolas/common/config"
 	A "legolas/common/models/action"
 	J "legolas/common/models/job"
 	R "legolas/common/models/run"
@@ -21,15 +19,13 @@ func main() {
 		os.Exit(0)
 	}
 
-	redisPool, err := pool.NewPool("tcp", C.RedisHost, C.RedisPoolSize)
-	if err != nil {
-		fmt.Printf("Cannot create Redis pool at: %s\n", C.RedisHost)
-	}
-	J.SetRedisPool(redisPool)
-
 	mongo := S.AskForMongo()
 	defer mongo.Close()
 
+	redis := S.GetRedisPool()
+	defer redis.Empty()
+
+	J.SetRedisPool(redis)
 	T.SetCol(mongo)
 	TC.SetCol(mongo)
 	A.SetCol(mongo)

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"time"
 
 	S "legolas/common/storage"
 )
@@ -20,6 +21,14 @@ func getMongo() *S.Mongo {
 	return &S.Mongo{
 		Session: col.Database.Session,
 	}
+}
+
+func GetAllInTimeOrder(limit int) (result []TestCase, err error) {
+	if limit < 1 {
+		limit = 25
+	}
+	err = col.Find(bson.M{"removed": false}).Sort("-created_at").Limit(limit).All(&result)
+	return
 }
 
 func GetAll(path string) (result []TestCase, err error) {
@@ -40,8 +49,9 @@ func GetOneById(id bson.ObjectId) (result TestCase, err error) {
 
 func New() (tc *TestCase) {
 	return &TestCase{
-		Id:     bson.NewObjectId(),
-		Params: make(map[string]interface{}),
+		Id:        bson.NewObjectId(),
+		Params:    make(map[string]interface{}),
+		CreatedAt: time.Now(),
 	}
 }
 
@@ -49,6 +59,10 @@ func (tc *TestCase) Save() (err error) {
 	if !tc.Id.Valid() {
 		tc.Id = bson.NewObjectId()
 	}
+	if tc.CreatedAt == (time.Time{}) {
+		tc.CreatedAt = time.Now()
+	}
+	tc.UpdatedAt = time.Now()
 	_, err = col.Upsert(bson.M{"_id": tc.Id}, *tc)
 	return
 }

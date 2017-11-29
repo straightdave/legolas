@@ -1,12 +1,17 @@
 package server
 
 import (
-	"github.com/codegangsta/martini-contrib/binding"
+	// "github.com/codegangsta/martini-contrib/binding"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
-	"net/url"
+	// "net/url"
 
-	"legolas/server/models"
+	A "legolas/common/models/action"
+	J "legolas/common/models/job"
+	JS "legolas/common/models/jobstate"
+	R "legolas/common/models/run"
+	TC "legolas/common/models/testcase"
+	S "legolas/common/storage"
 )
 
 type Server struct{}
@@ -17,23 +22,29 @@ func (server *Server) Run() {
 	m.Use(martini.Static("server/public"))
 	m.Use(render.Renderer())
 
-	m.Get("/cases/f/:word", func(p martini.Params, r render.Render) {
-		word, err := url.QueryUnescape(p["word"])
-		if err != nil {
-			r.JSON(200, Ex{"error": err.Error()})
-			return
-		}
+	J.SetRedisPool(S.GetRedisPool())
 
-		cases, err := models.FilterCases(word)
-		if err != nil {
-			r.JSON(200, Ex{"error": err.Error()})
-		} else {
-			r.JSON(200, cases)
-		}
-	})
+	// m.Get("/cases/f/:word", func(p martini.Params, r render.Render) {
+	// 	word, err := url.QueryUnescape(p["word"])
+	// 	if err != nil {
+	// 		r.JSON(200, Ex{"error": err.Error()})
+	// 		return
+	// 	}
+
+	// 	cases, err := models.FilterCases(word)
+	// 	if err != nil {
+	// 		r.JSON(200, Ex{"error": err.Error()})
+	// 	} else {
+	// 		r.JSON(200, cases)
+	// 	}
+	// })
 
 	m.Get("/cases", func(r render.Render) {
-		cases, err := models.FindAllCases()
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		TC.SetCol(mongo)
+
+		cases, err := TC.GetAllInTimeOrder(50)
 		if err != nil {
 			r.JSON(200, Ex{"error": err.Error()})
 		} else {
@@ -41,73 +52,81 @@ func (server *Server) Run() {
 		}
 	})
 
-	// create case
-	m.Post("/cases", binding.Json(models.Case{}), func(c models.Case, ferr binding.Errors, r render.Render) {
-		if ferr.Count() > 0 {
-			r.JSON(200, Ex{"error": "binding case post data failed"})
-		} else {
-			c0 := models.NewCase(c.Path, c.Name, c.Desc)
-			if err := c0.Save(); err != nil {
-				r.JSON(200, Ex{"error": err.Error()})
-			} else {
-				r.JSON(200, *c0)
-			}
-		}
-	})
+	// // create case
+	// m.Post("/cases", binding.Json(models.Case{}), func(c models.Case, ferr binding.Errors, r render.Render) {
+	// 	if ferr.Count() > 0 {
+	// 		r.JSON(200, Ex{"error": "binding case post data failed"})
+	// 	} else {
+	// 		c0 := models.NewCase(c.Path, c.Name, c.Desc)
+	// 		if err := c0.Save(); err != nil {
+	// 			r.JSON(200, Ex{"error": err.Error()})
+	// 		} else {
+	// 			r.JSON(200, *c0)
+	// 		}
+	// 	}
+	// })
 
-	// update case
-	m.Put("/case/:path/:name", binding.Json(models.Case{}), func(p martini.Params, c models.Case, ferr binding.Errors, r render.Render) {
-		if ferr.Count() > 0 {
-			r.JSON(200, Ex{"error": "binding case post data failed"})
+	// // update case
+	// m.Put("/case/:path/:name", binding.Json(models.Case{}), func(p martini.Params, c models.Case, ferr binding.Errors, r render.Render) {
+	// 	if ferr.Count() > 0 {
+	// 		r.JSON(200, Ex{"error": "binding case post data failed"})
+	// 		return
+	// 	}
+
+	// 	oldCase, err := models.FindCase(p["path"], p["name"])
+	// 	if err != nil {
+	// 		r.JSON(200, Ex{"error": "cannot find such case"})
+	// 		return
+	// 	}
+
+	// 	if err = oldCase.UpdateTo(&c); err != nil {
+	// 		r.JSON(200, Ex{"error": err.Error()})
+	// 	} else {
+	// 		r.JSON(200, c)
+	// 	}
+	// })
+
+	// // get a case
+	// m.Get("/case/:path/:name", func(p martini.Params, r render.Render) {
+	// 	c, err := models.FindCase(p["path"], p["name"])
+	// 	if err != nil {
+	// 		r.JSON(200, Ex{"error": err.Error()})
+	// 	} else {
+	// 		r.JSON(200, *c)
+	// 	}
+	// })
+
+	// run a case
+	m.Post("/case/:cid/runs", func(p martini.Params, r render.Render) {
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		R.SetCol(mongo)
+
+		run, err := R.InvokeByCaseIdStr(p["cid"])
+		if err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
 			return
 		}
-
-		oldCase, err := models.FindCase(p["path"], p["name"])
-		if err != nil {
-			r.JSON(200, Ex{"error": "cannot find such case"})
-			return
-		}
-
-		if err = oldCase.UpdateTo(&c); err != nil {
-			r.JSON(200, Ex{"error": err.Error()})
-		} else {
-			r.JSON(200, c)
-		}
+		r.JSON(200, run)
 	})
 
-	// get a case
-	m.Get("/case/:path/:name", func(p martini.Params, r render.Render) {
-		c, err := models.FindCase(p["path"], p["name"])
-		if err != nil {
-			r.JSON(200, Ex{"error": err.Error()})
-		} else {
-			r.JSON(200, *c)
-		}
-	})
-
-	// create a case run of one case
-	m.Post("/case/:path/:name/runs", func(p martini.Params, r render.Render) {
-		cr, err := models.NewCaseRun(&models.Case{Path: p["path"], Name: p["name"]})
-		if err != nil {
-			r.JSON(200, Ex{"error": err.Error()})
-		} else {
-			r.JSON(200, cr)
-		}
-	})
-
-	// delete a case
-	m.Delete("/case/:path/:name", func(p martini.Params, r render.Render) {
-		err := models.DeleteCase(p["path"], p["name"])
-		if err != nil {
-			r.JSON(200, Ex{"error": err.Error()})
-		} else {
-			r.JSON(200, Ex{"ok": "deleted"})
-		}
-	})
+	// // delete a case
+	// m.Delete("/case/:path/:name", func(p martini.Params, r render.Render) {
+	// 	err := models.DeleteCase(p["path"], p["name"])
+	// 	if err != nil {
+	// 		r.JSON(200, Ex{"error": err.Error()})
+	// 	} else {
+	// 		r.JSON(200, Ex{"ok": "deleted"})
+	// 	}
+	// })
 
 	// get all actions of a case
-	m.Get("/case/:path/:name/actions", func(p martini.Params, r render.Render) {
-		actions, err := models.FindActions(p["name"], p["path"])
+	m.Get("/case/:cid/actions", func(p martini.Params, r render.Render) {
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		A.SetCol(mongo)
+
+		actions, err := A.GetAllByCaseIdStr(p["cid"])
 		if err != nil {
 			r.JSON(200, Ex{"error": err.Error()})
 		} else {
@@ -116,8 +135,12 @@ func (server *Server) Run() {
 	})
 
 	// get all runs of a case
-	m.Get("/case/:path/:name/runs", func(p martini.Params, r render.Render) {
-		runs, err := models.FindCaseRuns(p["path"], p["name"])
+	m.Get("/case/:cid/runs", func(p martini.Params, r render.Render) {
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		R.SetCol(mongo)
+
+		runs, err := R.GetAllByCaseIdStr(p["cid"])
 		if err != nil {
 			r.JSON(200, Ex{"error": err.Error()})
 		} else {
@@ -125,62 +148,76 @@ func (server *Server) Run() {
 		}
 	})
 
-	// get one action of a case
-	m.Get("/case/:cpath/:cname/:name", func(p martini.Params, r render.Render) {
-		action, err := models.FindAction(p["cname"], p["cpath"], p["name"])
+	// get all job states of one run
+	m.Get("/run/:rid/jobstates", func(p martini.Params, r render.Render) {
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		JS.SetCol(mongo)
+
+		jss, err := JS.GetAllByRunIdStr(p["rid"])
 		if err != nil {
 			r.JSON(200, Ex{"error": err.Error()})
 		} else {
-			r.JSON(200, action)
+			r.JSON(200, jss)
 		}
 	})
 
-	// add a new action to a case
-	m.Post("/actions", binding.Json(models.Action{}), func(a models.Action, ferr binding.Errors, r render.Render) {
-		if ferr.Count() > 0 {
-			r.JSON(200, Ex{"error": "binding action post data failed"})
-			return
-		}
+	// // get one action of a case
+	// m.Get("/case/:cpath/:cname/:name", func(p martini.Params, r render.Render) {
+	// 	action, err := models.FindAction(p["cname"], p["cpath"], p["name"])
+	// 	if err != nil {
+	// 		r.JSON(200, Ex{"error": err.Error()})
+	// 	} else {
+	// 		r.JSON(200, action)
+	// 	}
+	// })
 
-		if err := a.Save(); err != nil {
-			r.JSON(200, Ex{"error": err.Error()})
-		} else {
-			r.JSON(200, a)
-		}
-	})
+	// // add a new action to a case
+	// m.Post("/actions", binding.Json(models.Action{}), func(a models.Action, ferr binding.Errors, r render.Render) {
+	// 	if ferr.Count() > 0 {
+	// 		r.JSON(200, Ex{"error": "binding action post data failed"})
+	// 		return
+	// 	}
 
-	// update an action
-	m.Put("/case/:cpath/:cname/:name", binding.Json(models.Action{}), func(newAction models.Action, p martini.Params, ferr binding.Errors, r render.Render) {
-		if ferr.Count() > 0 {
-			r.JSON(200, Ex{"error": "binding action post data failed"})
-			return
-		}
+	// 	if err := a.Save(); err != nil {
+	// 		r.JSON(200, Ex{"error": err.Error()})
+	// 	} else {
+	// 		r.JSON(200, a)
+	// 	}
+	// })
 
-		a0 := models.NewAction(p["cpath"], p["cname"], p["name"])
-		if err := a0.UpdateTo(&newAction); err != nil {
-			r.JSON(200, Ex{"error": err.Error()})
-		} else {
-			r.JSON(200, newAction)
-		}
-	})
+	// // update an action
+	// m.Put("/case/:cpath/:cname/:name", binding.Json(models.Action{}), func(newAction models.Action, p martini.Params, ferr binding.Errors, r render.Render) {
+	// 	if ferr.Count() > 0 {
+	// 		r.JSON(200, Ex{"error": "binding action post data failed"})
+	// 		return
+	// 	}
 
-	m.Delete("/case/:cpath/:cname/:name", func(p martini.Params, r render.Render) {
-		err := models.DeleteAction(p["cpath"], p["cname"], p["name"])
-		if err != nil {
-			r.JSON(200, Ex{"error": err.Error()})
-		} else {
-			r.JSON(200, Ex{"ok": "deleted"})
-		}
-	})
+	// 	a0 := models.NewAction(p["cpath"], p["cname"], p["name"])
+	// 	if err := a0.UpdateTo(&newAction); err != nil {
+	// 		r.JSON(200, Ex{"error": err.Error()})
+	// 	} else {
+	// 		r.JSON(200, newAction)
+	// 	}
+	// })
 
-	m.Get("/actions", func(r render.Render) {
-		actions, err := models.FindAllActions()
-		if err != nil {
-			r.JSON(200, Ex{"error": err.Error()})
-		} else {
-			r.JSON(200, actions)
-		}
-	})
+	// m.Delete("/case/:cpath/:cname/:name", func(p martini.Params, r render.Render) {
+	// 	err := models.DeleteAction(p["cpath"], p["cname"], p["name"])
+	// 	if err != nil {
+	// 		r.JSON(200, Ex{"error": err.Error()})
+	// 	} else {
+	// 		r.JSON(200, Ex{"ok": "deleted"})
+	// 	}
+	// })
+
+	// m.Get("/actions", func(r render.Render) {
+	// 	actions, err := models.FindAllActions()
+	// 	if err != nil {
+	// 		r.JSON(200, Ex{"error": err.Error()})
+	// 	} else {
+	// 		r.JSON(200, actions)
+	// 	}
+	// })
 
 	m.Run()
 }

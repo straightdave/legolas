@@ -1,22 +1,25 @@
-<!-- case list -->
 <template>
 <div id="app-sidebar">
-    <app-search
-        @do-filter="doFiltering"
-    />
+    <app-search @do-filter="doFilter" />
+
     <div class="titlebar">
-        <span>My Cases</span>
-        <a id="create" v-on:click.stop.prevent="create"><i class="fa fa-plus"></i></a>
+        <span>{{ title }}</span>
+        <a id="create" v-on:click.stop.prevent="createItem"><i class="fa fa-plus"></i></a>
     </div>
 
-    <div id="list" v-if="cases != null && cases.length">
+    <div id="list" v-if="whatFor === 'cases' && items != null && items.length">
         <app-case
-            v-for="c in cases"
-            :key="c.name"
-            :case="c"
-            @view-case="$emit('case-clicked', c)"
+            v-for="item in items"
+            :key="item.name"
+            :case="item"
+            @view-case="$emit('item-clicked', item)"
         />
     </div>
+
+    <div id="list" v-if="whatFor === 'templates'">
+        template list
+    </div>
+
 </div>
 </template>
 
@@ -27,47 +30,63 @@ import $ from 'jquery'
 
 export default {
     components: {AppSearch, AppCase},
+    props: {
+        whatFor: {
+            type: String,
+            required: true
+        }
+    },
     data() {
         return {
-            cases: []
+            items: []
+        }
+    },
+    computed: {
+        title() {
+            var result = ""
+            switch (this.whatFor) {
+                case "cases":
+                    result = "My Cases"
+                    break
+                case "templates":
+                    result = "My Templates"
+                    break
+                default:
+                    result = "unknown"
+            }
+            return result
         }
     },
     mounted: function () {
         var self = this // critical!
-        $.get('/cases', function (data) {
-            self.cases = data
-        })
+        if (this.whatFor === 'cases') {
+            $.get('/cases', function (data) {
+                self.items = data
+            })
+        }
+        else if (this.whatFor === 'templates') {
+        }
     },
     methods: {
-        create: function () {
-            var newOne = {
-                path: 'default',
-                name: 'case-new',
-                desc: 'new case',
-                isNew: true
+        createItem() {
+            if (this.whatFor === 'cases') {
+                var newOne = {
+                    path: 'default',
+                    name: 'case-new',
+                    desc: 'new case',
+                    isNew: true
+                }
+                this.items.unshift(newOne)
+                // pop-up event to parent, let new case content show in panel
+                this.$emit('item-clicked', newOne)
             }
-            this.cases.unshift(newOne)
-            // pop-up event to parent, let new case content show in panel
-            this.$emit('case-clicked', newOne)
+            else if (this.whatFor === 'templates') {
+
+            }
         },
-        doFiltering(word) {
-            console.log('go filter: [' + word + ']')
-            if (word === "") {
-                // refresh case list to all
-                var self = this
-                $.get('/cases', function (data) {
-                    console.log('got and set the case list to all')
-                    self.cases = data
-                })
-            }
-            else {
-                // parse and do the filtering
-                var url = `/cases/f/${encodeURI(word)}`
-                $.get(url, function (data) {
-                    console.log('got filtered result')
-                    self.cases = data
-                })
-            }
+
+        doFilter(word) {
+            console.log('filter word: ' + word)
         }
     }
 }

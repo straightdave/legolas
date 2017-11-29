@@ -11,7 +11,7 @@
             </span>
             {{ name }}
         </span>
-        <span id="case-group">$/{{ path }}</span>
+        <span id="case-group">{{ path }}</span>
     </div>
 </div>
 </template>

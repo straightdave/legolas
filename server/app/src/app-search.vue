@@ -1,4 +1,3 @@
-<!-- search/filter input -->
 <template>
 <div id="search-wrapper">
     <input type="text" v-model.trim="word" placeholder="Commands">

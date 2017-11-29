@@ -19,6 +19,8 @@
 </template>
 
 <script>
+import Vue from 'vue'
+
 var AppAction = Vue.extend({
     props: {
         action: {

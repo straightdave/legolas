@@ -39,6 +39,12 @@ func GetAllByCaseId(caseId bson.ObjectId) (result []Action, err error) {
 	return
 }
 
+func GetAllByCaseIdStr(caseId string) (result []Action, err error) {
+	_cid := bson.ObjectIdHex(caseId)
+	err = col.Find(bson.M{"case_id": _cid, "removed": false}).Sort("seq_no").All(&result)
+	return
+}
+
 func GetOne(cpath, cname, name string) (result Action, err error) {
 	TC.SetCol(getMongo())
 	tc, err := TC.GetOne(cpath, cname)
@@ -73,7 +79,7 @@ func (a *Action) Save() (err error) {
 
 		actCount, err := CountByCase(a.CaseId)
 		if err != nil {
-			return
+			return err
 		}
 
 		a.SeqNo = actCount + 5

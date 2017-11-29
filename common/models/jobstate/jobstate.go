@@ -26,9 +26,12 @@ type JobState struct {
 	State     string                 `json:"state" bson:"state"`
 	Error     string                 `json:"error" bson:"error"`
 	Output    string                 `json:"output" bson:"output"`
-	Results   map[string]interface{} `json:"results" bson:"results"`       // updated by python
-	StartedAt string                 `json:"started_at" bson:"started_at"` // updated by python
-	EndedAt   string                 `json:"ended_at" bson:"ended_at"`     // updated by python
+	Results   map[string]interface{} `json:"results" bson:"results"`
+	StartedAt string                 `json:"started_at" bson:"started_at"`
+	EndedAt   string                 `json:"ended_at" bson:"ended_at"`
+
+	// informative items for less queries from frontend
+	ActionName string `json:"action_name" bson:"action_name"`
 }
 
 func (js *JobState) JsonPretty() ([]byte, error) {

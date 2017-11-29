@@ -1,8 +1,12 @@
 <!-- app action panel -->
 <template>
 <div id="action-panel" v-if="localActionObject">
-    <div><input type="text" v-model="localActionObject.name" placeholder="Action name"></input></div>
-    <div><input type="text" v-model="localActionObject.desc" placeholder="Desc goes here..."></input></div>
+    <div>
+        <input type="text" v-model="localActionObject.name" placeholder="Action name"></input>
+    </div>
+    <div>
+        <input type="text" v-model="localActionObject.desc" placeholder="Desc goes here..."></input>
+    </div>
     <div id="snippet">
         <textarea v-model="localActionObject.snippet" rows="25" placeholder="Snippet..."></textarea>
     </div>
@@ -14,6 +18,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import $ from 'jquery'
 
 var AppActionPanel = Vue.extend({
