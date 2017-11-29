@@ -10,6 +10,7 @@ import (
 	J "legolas/common/models/job"
 	JS "legolas/common/models/jobstate"
 	R "legolas/common/models/run"
+	T "legolas/common/models/template"
 	TC "legolas/common/models/testcase"
 	S "legolas/common/storage"
 )
@@ -218,6 +219,19 @@ func (server *Server) Run() {
 	// 		r.JSON(200, actions)
 	// 	}
 	// })
+
+	m.Get("/templates", func(r render.Render) {
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		T.SetCol(mongo)
+
+		templates, err := T.GetAll2(25)
+		if err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, templates)
+		}
+	})
 
 	m.Run()
 }

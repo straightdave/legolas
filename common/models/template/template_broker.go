@@ -4,6 +4,7 @@ import (
 	"errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"time"
 
 	S "legolas/common/storage"
 )
@@ -23,8 +24,16 @@ func getMongo() *S.Mongo {
 	}
 }
 
+func GetAll2(limit int) (result []Template, err error) {
+	if limit < 1 {
+		limit = 50
+	}
+	err = col.Find(bson.M{"removed": false}).Sort("-created_at").Limit(limit).All(&result)
+	return
+}
+
 func GetAll(path string) (result []Template, err error) {
-	err = col.Find(bson.M{"path": path, "removed": false}).All(&result)
+	err = col.Find(bson.M{"path": path, "removed": false}).Sort("-created_at").All(&result)
 	return
 }
 
@@ -48,6 +57,9 @@ func New() (tpl *Template) {
 func (tpl *Template) Save() (err error) {
 	if !tpl.Id.Valid() {
 		tpl.Id = bson.NewObjectId()
+	}
+	if tpl.CreatedAt == (time.Time{}) {
+		tpl.CreatedAt = time.Now()
 	}
 	_, err = col.Upsert(bson.M{"_id": tpl.Id}, *tpl)
 	return

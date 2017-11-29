@@ -66,8 +66,8 @@ import AppActionStore from './app-action-store.vue'
 import AppCaseVariable from './app-case-variable.vue'
 import $ from 'jquery'
 
-var AppDetail = Vue.extend({
-    components: {AppAction, AppActionPanel, AppRunInfo, AppCaseVariable},
+var AppCaseDetail = Vue.extend({
+    components: {AppAction, AppActionStore, AppActionPanel, AppRunInfo, AppCaseVariable},
     props: {
         caseInfo: {
             type: Object,
@@ -131,6 +131,12 @@ var AppDetail = Vue.extend({
             this.actions.push(newAction)
         },
         refreshActionList(toCloseActionPanel) {
+            if (this.isNew) {
+                console.log('new case, no fetching actions')
+                this.actions = []
+                this.currentAction = {}
+                return
+            }
             console.log('refreshing action list')
             var self = this
             var url = `/case/${encodeURI(self.caseInfo._id)}/actions`
@@ -192,7 +198,7 @@ var AppDetail = Vue.extend({
         }
     }
 })
-export default AppDetail
+export default AppCaseDetail
 </script>
 
 <style scoped>

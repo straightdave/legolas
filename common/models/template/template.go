@@ -3,16 +3,18 @@ package template
 import (
 	"encoding/json"
 	"gopkg.in/mgo.v2/bson"
+	"time"
 )
 
 type Template struct {
-	Id      bson.ObjectId                     `json:"_id" bson:"_id"`
-	Path    string                            `json:"path" bson:"path"`
-	Name    string                            `json:"name" bson:"name"`
-	Desc    string                            `json:"desc" bson:"desc"`
-	Params  map[string]map[string]interface{} `json:"params" bson:"params"`
-	Snippet string                            `json:"snippet" bson:"snippet"`
-	Removed bool                              `json:"removed" bson:"removed"`
+	Id        bson.ObjectId                     `json:"_id" bson:"_id"`
+	Path      string                            `json:"path" bson:"path"`
+	Name      string                            `json:"name" bson:"name"`
+	Desc      string                            `json:"desc" bson:"desc"`
+	Params    map[string]map[string]interface{} `json:"params" bson:"params"`
+	Snippet   string                            `json:"snippet" bson:"snippet"`
+	Removed   bool                              `json:"removed" bson:"removed"`
+	CreatedAt time.Time                         `json:"created_at" bson:"created_at"`
 }
 
 func (tpl *Template) Json() ([]byte, error) {

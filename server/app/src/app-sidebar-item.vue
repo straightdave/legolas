@@ -1,17 +1,17 @@
-<!-- case listed item -->
+<!-- listed item -->
 <template>
-<div id="case" @click="$emit('view-case', name)">
-    <div id="case-inner">
-        <span id="case-title">
+<div id="item" @click="$emit('view-item-detail')">
+    <div id="item-inner">
+        <span id="item-title">
             <span v-if="isNew" class="newitem">
                 <i class="fa fa-circle"></i>
             </span>
             <span v-else class="green">
                 <i class="fa fa-check"></i>
             </span>
-            {{ name }}
+            {{ itemName }}
         </span>
-        <span id="case-group">{{ path }}</span>
+        <span id="item-group">{{ itemPath }}</span>
     </div>
 </div>
 </template>
@@ -19,23 +19,24 @@
 <script>
 export default {
     props: {
-        case: {
+        itemObject: {
             type: Object,
             required: true
         }
     },
     data() {
         return {
-            name: this.case.name,
-            path: this.case.path,
-            isNew: this.case.isNew
+            itemId:   this.itemObject._id,
+            itemName: this.itemObject.name,
+            itemPath: this.itemObject.path,
+            isNew:    this.itemObject.isNew
         }
     }
 }
 </script>
 
 <style scoped>
-div#case {
+div#item {
     width: 100%;
     margin-top: 5px;
 }
@@ -48,7 +49,7 @@ div#case {
     color: #4AACF2;
 }
 
-div#case-inner {
+div#item-inner {
     height: 100px;
     background-color: #fff;
     border-left: solid 10px #00B140;
@@ -58,13 +59,13 @@ div#case-inner {
     position: relative;
 }
 
-span#case-title {
+span#item-title {
     display: block;
     font-size: 20px;
     overflow: hidden;
 }
 
-span#case-group {
+span#item-group {
     display: block;
     position: absolute;
     left: 10px;

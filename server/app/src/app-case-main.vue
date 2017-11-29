@@ -1,31 +1,31 @@
 <template>
 <div>
-    <app-sidebar :whatFor="whatFor" @item-clicked="showCaseDetail"></app-sidebar>
-    <app-detail v-if="hasCInfo" :case-info="cinfo"></app-detail>
+    <app-sidebar :what-for="whatFor" @item-clicked="showCaseDetail"></app-sidebar>
+    <app-case-detail v-if="hasCInfo" :case-info="cinfo"></app-case-detail>
 </div>
 </template>
 
 <script>
 import Vue from 'vue'
 import AppSidebar from './app-sidebar.vue'
-import AppDetail from './app-detail.vue'
+import AppCaseDetail from './app-case-detail.vue'
 
 var AppCaseMain = Vue.extend({
-    components: {AppSidebar, AppDetail},
-    methods: {
-        showCaseDetail: function (c) {
-            this.cinfo = c
-        }
-    },
+    components: {AppSidebar, AppCaseDetail},
     data() {
         return {
             whatFor: 'cases',
-            cinfo: {}
+            cinfo: null
         }
     },
     computed: {
         hasCInfo() {
-            return this.cinfo.name !== undefined
+            return this.cinfo !== null
+        }
+    },
+    methods: {
+        showCaseDetail(caseObject) {
+            this.cinfo = caseObject
         }
     }
 })
