@@ -1,9 +1,10 @@
 package server
 
 import (
-	// "github.com/codegangsta/martini-contrib/binding"
+	"github.com/codegangsta/martini-contrib/binding"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
+	"gopkg.in/mgo.v2/bson"
 	// "net/url"
 
 	A "legolas/common/models/action"
@@ -67,25 +68,34 @@ func (server *Server) Run() {
 	// 	}
 	// })
 
-	// // update case
-	// m.Put("/case/:path/:name", binding.Json(models.Case{}), func(p martini.Params, c models.Case, ferr binding.Errors, r render.Render) {
-	// 	if ferr.Count() > 0 {
-	// 		r.JSON(200, Ex{"error": "binding case post data failed"})
-	// 		return
-	// 	}
+	// update case
+	m.Put("/case/:cid", binding.Json(TC.TestCase{}), func(p martini.Params, newTC TC.TestCase, ferr binding.Errors, r render.Render) {
+		if ferr.Count() > 0 {
+			r.JSON(200, Ex{"error": "binding case post data failed"})
+			return
+		}
 
-	// 	oldCase, err := models.FindCase(p["path"], p["name"])
-	// 	if err != nil {
-	// 		r.JSON(200, Ex{"error": "cannot find such case"})
-	// 		return
-	// 	}
+		cid := bson.ObjectIdHex(p["cid"])
+		if !cid.Valid() {
+			r.JSON(200, Ex{"error": "invalid case id"})
+			return
+		}
 
-	// 	if err = oldCase.UpdateTo(&c); err != nil {
-	// 		r.JSON(200, Ex{"error": err.Error()})
-	// 	} else {
-	// 		r.JSON(200, c)
-	// 	}
-	// })
+		if cid != newTC.Id {
+			r.JSON(200, Ex{"error": "case id mismatches"})
+			return
+		}
+
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		TC.SetCol(mongo)
+
+		if err := newTC.Save(); err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, newTC)
+		}
+	})
 
 	// // get a case
 	// m.Get("/case/:path/:name", func(p martini.Params, r render.Render) {
@@ -230,6 +240,53 @@ func (server *Server) Run() {
 			r.JSON(200, Ex{"error": err.Error()})
 		} else {
 			r.JSON(200, templates)
+		}
+	})
+
+	// create a template
+	m.Post("/templates", binding.Json(T.Template{}), func(newT T.Template, ferr binding.Errors, r render.Render) {
+		if ferr.Count() > 0 {
+			r.JSON(200, Ex{"error": "binding template post data failed"})
+			return
+		}
+
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		T.SetCol(mongo)
+
+		if err := newT.Save(); err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, newT)
+		}
+	})
+
+	// update template
+	m.Put("/template/:tid", binding.Json(T.Template{}), func(p martini.Params, newT T.Template, ferr binding.Errors, r render.Render) {
+		if ferr.Count() > 0 {
+			r.JSON(200, Ex{"error": "binding template post data failed"})
+			return
+		}
+
+		tid := bson.ObjectIdHex(p["tid"])
+		if !tid.Valid() {
+			r.JSON(200, Ex{"error": "invalid template id"})
+			return
+		}
+
+		if tid != newT.Id {
+			r.JSON(200, Ex{"error": "template id mismatches"})
+			return
+		}
+
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		T.SetCol(mongo)
+
+		if err := newT.Save(); err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, newT)
 		}
 	})
 

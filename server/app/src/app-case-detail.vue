@@ -160,17 +160,19 @@ var AppCaseDetail = Vue.extend({
                 $.post("/cases", JSON.stringify(self.localCaseInfo), function (data) {
                     console.log(JSON.stringify(data))
                     self.isNew = false
+                    // self.$emit('refresh-list-required')
                 }, "json")
             }
             else {
                 console.log('update existing one')
-                var oldCaseUrl = `/case/${encodeURI(this.caseInfo.path)}/${encodeURI(this.caseInfo.name)}`
+                var oldCaseUrl = `/case/${encodeURI(this.caseInfo._id)}`
                 $.ajax({
                     url: oldCaseUrl,
                     type: 'PUT',
                     data: JSON.stringify(this.localCaseInfo),
                     success: function (resp) {
                         console.log(JSON.stringify(resp))
+                        // self.$emit('refresh-list-required')
                     },
                     error: function (resp) {
                         console.log(JSON.stringify(resp))
