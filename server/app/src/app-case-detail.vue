@@ -12,10 +12,10 @@
     </div>
     <div id="nav-in-case">
         <ul>
-            <li><a v-on:click.stop.prevent="cliTab(0)" :class="{active: activeTab == 0}">Actions</a></li>
-            <li><a v-on:click.stop.prevent="cliTab(1)" :class="{active: activeTab == 1}">Variables</a></li>
-            <li><a v-on:click.stop.prevent="cliTab(2)" :class="{active: activeTab == 2}">Runs</a></li>
-            <li><a v-on:click.stop.prevent="cliTab(3)" :class="{active: activeTab == 3}">Tracing</a></li>
+            <li><a @click.stop.prevent="cliTab(0)" :class="{active: activeTab == 0}">Actions</a></li>
+            <li><a @click.stop.prevent="cliTab(1)" :class="{active: activeTab == 1}">Variables</a></li>
+            <li><a @click.stop.prevent="cliTab(2)" :class="{active: activeTab == 2}">Runs</a></li>
+            <li><a @click.stop.prevent="cliTab(3)" :class="{active: activeTab == 3}">Tracing</a></li>
         </ul>
     </div>
     <div id="detail-panel">
@@ -26,33 +26,28 @@
                     v-for="a in actions"
                     :key="a.name"
                     :action="a"
-                    @actionClicked="setCurrentAction(a)"
-                />
-                <div id="newaction" v-on:click="addNewAction">
-                    <i class="fa fa-plus-square"></i>&nbsp;new
+                    @actionClicked="setCurrentAction(a)" />
+                <div id="newaction" @click="addNewAction">
+                    <i class="fa fa-plus-square"></i> new
                 </div>
             </div>
-            <AppActionStore
-                v-if="isNew && !hasShownStore"
-            />
             <AppActionPanel
                 v-if="hasCurrentAction"
                 :action-object="currentAction"
-                @action-list-refresh-needed="refreshActionList"
-            />
+                @action-list-refresh-needed="refreshActionList" />
         </div>
 
         <div :class="{hidden: activeTab != 1}">
             <div id="param-list">
                 <div class="param-list-item" v-for="(p, index) in paramList" :key="index">
-                    <a v-on:click.stop.prevent="removeParam(p.name)">
+                    <a @click.stop.prevent="removeParam(p.name)">
                         <i class="fa fa-minus-circle"></i>
                     </a>
                     <input type="text" v-model="p.name" size="20" /> :
                     <input type="text" v-model="p.value" size="50" />
                 </div>
                 <div id="new-param-box">
-                    <a v-on:click.stop.prevent="newParam()">
+                    <a @click.stop.prevent="newParam()">
                         <i class="fa fa-plus"></i> New
                     </a>
                 </div>
@@ -66,9 +61,9 @@
                     v-for="run in runs"
                     :key="run._id"
                     :run="run"
-                    @run-clicked="setCurrentRun(run)"
-                />
+                    @run-clicked="setCurrentRun(run)" />
             </div>
+            <AppRunPanel v-if="hasCurrentRun" :run-object="currentRun" />
         </div>
 
         <div :class="{hidden: activeTab != 3}">
@@ -86,11 +81,11 @@ Vue.use(VueResource)
 import AppAction from './app-action.vue'
 import AppActionPanel from './app-action-panel.vue'
 import AppRun from './app-run.vue'
-import AppActionStore from './app-action-store.vue'
+import AppRunPanel from './app-run-panel.vue'
 import $ from 'jquery'
 
 var AppCaseDetail = Vue.extend({
-    components: {AppAction, AppActionStore, AppActionPanel, AppRun},
+    components: {AppAction, AppActionPanel, AppRun, AppRunPanel},
     props: {
         caseInfo: {
             type: Object,
@@ -114,10 +109,7 @@ var AppCaseDetail = Vue.extend({
         }
     },
     watch: {
-        // watch prop:caseInfo
-        // since we use local copy of prop here,
-        // this change is only caused by user selecting another case in the list
-        caseInfo: function (newCaseInfo) {
+        caseInfo(newCaseInfo) {
             console.log('user click the case: ' + newCaseInfo.name)
             this.localCaseInfo = JSON.parse(JSON.stringify(newCaseInfo))
             this.isNew = newCaseInfo.isNew
@@ -127,17 +119,20 @@ var AppCaseDetail = Vue.extend({
         }
     },
     computed: {
-        hasActions () {
+        hasActions() {
             return this.actions && this.actions.length > 0
         },
-        hasRuns () {
+        hasRuns() {
             return this.runs && this.runs.length > 0
         },
-        hasCurrentAction: function () {
+        hasCurrentAction() {
             if (!this.hasActions) {
                 this.currentAction = {}
             }
             return this.currentAction.name !== undefined
+        },
+        hasCurrentRun() {
+            return this.currentRun !== null
         }
     },
     mounted() {
@@ -366,11 +361,6 @@ div#nav-in-case li a:hover,
 div#nav-in-case li a.active {
     border-bottom: solid 2px #00B140;
     padding-bottom: 8px;
-}
-
-div#detail-panel {
-    width: 1000px;
-    min-width: 1000px;
 }
 
 div#innerlist {

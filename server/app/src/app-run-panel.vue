@@ -1,12 +1,18 @@
 <template>
 <div id="run-panel">
+    <div id="run-title">
+        {{ runObject._id }}
+    </div>
     <div id="job-state-list">
-        <div id="action-name">
 
+        <div id="job-item" v-for="job in jobStates" :key="job.action_id">
+            <div id="job-title">
+                {{ job.action_name }} - {{ job.state }} - {{ job.error }}
+            </div>
+            <div>
+                <pre>{{ job.output }}</pre>
+            </div>
         </div>
-
-
-
     </div>
 </div>
 </template>
@@ -28,20 +34,15 @@ var AppRunDetail = Vue.extend({
             jobStates: []
         }
     },
-    mounted() {
-        console.log('run detail panel clicked, runObj = ' + JSON.stringify(this.runObject))
-
-    },
     watch: {
         runObject(newRunObject) {
-            console.log('use click run: ' + JSON.stringify(newRunObject))
-            this.refreshRunDetails(newRunObject._id)
+            this.refreshRunDetails()
         }
     },
     methods: {
-        refreshRunDetails(runId) {
-            console.log(`getting job states of run:${runId}`)
-            this.$http.get(`/run/${encodeURI(runId)}/jobstates`).then(
+        refreshRunDetails() {
+            console.log(`getting job states of run: ${this.runObject._id}`)
+            this.$http.get(`/run/${encodeURI(this.runObject._id)}/jobstates`).then(
                 resp => {
                     var data = resp.body
                     console.log('got jobStates: ' + JSON.stringify(data))
@@ -53,12 +54,10 @@ var AppRunDetail = Vue.extend({
                     }
                 },
                 resp => {
-                    console.log('http get failed, resp: ' + resp)
-                    this.jobStates = []
+                    console.log('getting jobstates failed, resp: ' + resp.body)
                 }
             )
         },
-
     }
 })
 export default AppRunDetail
@@ -66,9 +65,26 @@ export default AppRunDetail
 
 <style scoped>
 div#run-panel {
-    width: 600px;
+    width: 800px;
     float: left;
     margin-left: 10px;
+}
+
+div#job-state-list {
+    overflow: scroll;
+}
+
+div#job-title {
+    color: #0366d6;
+    font-weight: 300;
+}
+
+div#run-title {
+    background-color: #ececec;
+    font-family: 'Consolas', 'source-code-pro', monospace;
+    font-size: 18px;
+    padding: 3px 0px;
+    margin-bottom: 5px;
 }
 
 </style>
