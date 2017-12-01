@@ -5,24 +5,40 @@
         <p><input id="name" type="text" v-model="localInfo.name"></input></p>
         <p><input id="desc" type="text" v-model="localInfo.desc"></input></p>
         <div id="buttons">
-            <button v-on:click="save">Save</button>
+            <button v-on:click="save()">Save</button>
         </div>
     </div>
     <div id="nav-in-template">
         <ul>
-            <li><a v-on:click.stop.prevent="activeTab = 0" v-bind:class="{active: activeTab == 0}">Snippet</a></li>
-            <li><a v-on:click.stop.prevent="activeTab = 1" v-bind:class="{active: activeTab == 1}">Params</a></li>
+            <li><a v-on:click.stop.prevent="switchToTab(0)" :class="{active: activeTab == 0}">Snippet</a></li>
+            <li><a v-on:click.stop.prevent="switchToTab(1)" :class="{active: activeTab == 1}">Params</a></li>
         </ul>
     </div>
     <div id="detail-panel">
-        <div v-if="activeTab == 0">
+        <div :class="{hidden: activeTab != 0}">
             <pre id="brace-editor">{{ localInfo.snippet }}</pre>
         </div>
 
-        <div v-else-if="activeTab == 1">
+        <div :class="{hidden: activeTab != 1}">
             <div id="param-list">
-                <div v-for="(value, key) in localInfo.params">
-                    {{ key }} : {{ value }}
+                <div class="param-list-item" v-for="(p, index) in paramList" :key="index">
+                    <a v-on:click.stop.prevent="removeParam(p.name)">
+                        <i class="fa fa-minus-circle"></i>
+                    </a>
+                    <input type="text" v-model="p.name" size="20" />
+                    <select v-model="p.type">
+                        <option value="text"    :selected="p.type == 'text'">text</option>
+                        <option value="number"  :selected="p.type == 'number'">number</option>
+                        <option value="boolean" :selected="p.type == 'boolean'">boolean</option>
+                    </select>
+                    <input :id="index + '_required'" type="checkbox" name="isRequired" v-model="p.required" />
+                    <label :for="index + '_required'">Required</label>
+                    <input type="text" v-model="p.default" size="50" />
+                </div>
+                <div id="new-param-box">
+                    <a v-on:click.stop.prevent="newParam()">
+                        <i class="fa fa-plus"></i> New
+                    </a>
                 </div>
             </div>
         </div>
@@ -47,44 +63,46 @@ var AppTemplateDetail = Vue.extend({
         }
     },
     watch: {
-        templateObject: function (newOne) {
+        templateObject(newOne) {
             console.log('user click other template: ' + JSON.stringify(newOne))
             this.localInfo = JSON.parse(JSON.stringify(newOne))
             this.isNew = newOne.isNew
+            this.activeTab = 0
             this.initEditor()
+            this.initParameters()
         }
+    },
+    mounted() {
+        this.initEditor()
+        this.initParameters()
     },
     data() {
         return {
             activeTab: 0,
             localInfo: JSON.parse(JSON.stringify(this.templateObject)),
+            paramList: [],
             isNew: this.templateObject.isNew,
+
             editor: null
         }
     },
-    mounted() {
-        this.initEditor()
-    },
-    updated() {
-        this.initEditor()
-        this.initParamList()
-    },
     methods: {
-        initParamList() {
-            if (this.activeTab != 1) {
-                return
+        switchToTab(tab) {
+            this.activeTab = tab
+        },
+        initParameters() {
+            if (!this.localInfo.hasOwnProperty('params')) {
+                this.localInfo['params'] = {}
             }
-
-            var params = {}
-            if (!this.isNew) {
-                params = this.localInfo.params
-            }
+            var pdict = this.localInfo.params
+            this.paramList = Object.keys(pdict).map(key => ({
+                name:     key,
+                required: pdict[key].required,
+                type:     pdict[key].type,
+                default:  pdict[key].default
+            }))
         },
         initEditor() {
-            if (this.activeTab != 0) {
-                return
-            }
-
             var content = ''
             if (!this.isNew) {
                 content = this.localInfo.snippet
@@ -97,14 +115,45 @@ var AppTemplateDetail = Vue.extend({
             editor.setValue(content)
             this.editor = editor
         },
+        newParam() {
+            console.log('adding a new param')
+            this.paramList.push({
+                name: '',
+                required: false,
+                type: 'text'
+            })
+        },
+        removeParam(key) {
+            console.log('removing a param: ' + key)
+            var r = confirm("remove this param?")
+            if (r != true) {
+                return
+            }
+            var index = this.paramList.findIndex(i => i.name === key)
+            this.paramList.splice(index, 1)
+        },
         save() {
             this.localInfo.snippet = this.editor.getValue()
+
+            this.localInfo.params = {}
+            for (var item of this.paramList) {
+                console.log('item: ' + JSON.stringify(item))
+                var _k = item.name.trim()
+                if (_k !== 'new' && _k !== '') {
+                    this.localInfo.params[_k] = {
+                        'type': item.type,
+                        'required': item.required,
+                        'default': item.default
+                    }
+                }
+            }
+
             console.log('updating template...')
             if (!this.isNew) {
                 var template_id = this.templateObject._id
                 this.$http.put(`/template/${encodeURI(template_id)}`, this.localInfo).then(
                     resp => {
-                        console.log('save template succeeded. new one: ' + JSON.stringify(resp))
+                        console.log('save template succeeded: ' + JSON.stringify(resp))
                     },
                     resp => {
                         console.log('http put failed: ' + JSON.stringify(resp))
@@ -115,7 +164,7 @@ var AppTemplateDetail = Vue.extend({
                 console.log('creating new template...')
                 this.$http.post(`/templates`, this.localInfo).then(
                     resp => {
-                        console.log('save template succeeded. new one: ' + JSON.stringify(resp))
+                        console.log('save template succeeded: ' + JSON.stringify(resp))
                     },
                     resp => {
                         console.log('http put failed: ' + JSON.stringify(resp))
@@ -129,6 +178,10 @@ export default AppTemplateDetail
 </script>
 
 <style scoped>
+div.hidden {
+    display: none;
+}
+
 div#app-detail {
     float: left;
     padding: 10px;
@@ -202,6 +255,39 @@ pre#brace-editor {
     font-size: 18px;
     font-weight: normal;
     height: 500px;
+}
+
+div#new-param-box {
+    margin-top: 10px;
+}
+div#new-param-box a {
+    font-size: 18px;
+    text-decoration: none;
+    color: gray;
+    cursor: pointer;
+    display: block;
+}
+
+div.param-list-item input[type='text'] {
+    font-weight: 200;
+    font-size: 18px;
+    border: 0;
+    background-color: #fff;
+}
+div.param-list-item select {
+    font-size: 18px;
+    font-weight: 200;
+}
+
+div.param-list-item {
+    margin-bottom: 10px;
+}
+
+div.param-list-item a {
+    font-size: 18px;
+    text-decoration: none;
+    color: #00B140;
+    cursor: pointer;
 }
 
 </style>

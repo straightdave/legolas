@@ -21,7 +21,7 @@ import AppCaseMain from './app-case-main.vue'
 import AppTemplateMain from './app-template-main.vue'
 
 const AppHelpMain = {
-    template: '<h1>fucking help</h1>'
+    template: '<h1>for god\'s sake...</h1>'
 }
 
 const router = new VueRouter({

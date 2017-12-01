@@ -11,7 +11,8 @@
             </span>
             {{ itemName }}
         </span>
-        <span id="item-group">{{ itemPath }}</span>
+        <span id="item-inside1">{{ itemPath }}</span>
+        <span id="item-inside2"><i class="fa fa-clock-o"></i> {{ itemCreatedAt }}</span>
     </div>
 </div>
 </template>
@@ -26,12 +27,12 @@ export default {
     },
     data() {
         return {
-            itemId:   this.itemObject._id,
             itemName: this.itemObject.name,
             itemPath: this.itemObject.path,
+            itemCreatedAt: (new Date(this.itemObject.created_at)).toLocaleString(),
             isNew:    this.itemObject.isNew
         }
-    }
+    },
 }
 </script>
 
@@ -65,7 +66,15 @@ span#item-title {
     overflow: hidden;
 }
 
-span#item-group {
+span#item-inside1 {
+    display: block;
+    position: absolute;
+    left: 10px;
+    bottom: 30px;
+    color: gray;
+}
+
+span#item-inside2 {
     display: block;
     position: absolute;
     left: 10px;
