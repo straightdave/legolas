@@ -154,6 +154,7 @@ var AppTemplateDetail = Vue.extend({
                 this.$http.put(`/template/${encodeURI(template_id)}`, this.localInfo).then(
                     resp => {
                         console.log('save template succeeded: ' + JSON.stringify(resp))
+                        this.$emit('save-succeeded')
                     },
                     resp => {
                         console.log('http put failed: ' + JSON.stringify(resp))
@@ -165,6 +166,7 @@ var AppTemplateDetail = Vue.extend({
                 this.$http.post(`/templates`, this.localInfo).then(
                     resp => {
                         console.log('save template succeeded: ' + JSON.stringify(resp))
+                        this.$emit('save-succeeded')
                     },
                     resp => {
                         console.log('http put failed: ' + JSON.stringify(resp))

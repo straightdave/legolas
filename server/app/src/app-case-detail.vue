@@ -6,21 +6,21 @@
         <p><input id="name" type="text" v-model="localCaseInfo.name"></input></p>
         <p><input id="desc" type="text" v-model="localCaseInfo.desc"></input></p>
         <div id="buttons">
-            <button v-on:click="saveCase">Save</button>
-            <button v-on:click="runCase">Run</button>
+            <button @click="saveCase">Save</button>
+            <button @click="runCase">Run</button>
         </div>
     </div>
     <div id="nav-in-case">
         <ul>
-            <li><a v-on:click.stop.prevent="cliTab(0)" v-bind:class="{active: activeTab == 0}">Actions</a></li>
-            <li><a v-on:click.stop.prevent="cliTab(1)" v-bind:class="{active: activeTab == 1}">Variables</a></li>
-            <li><a v-on:click.stop.prevent="cliTab(2)" v-bind:class="{active: activeTab == 2}">Runs</a></li>
-            <li><a v-on:click.stop.prevent="cliTab(3)" v-bind:class="{active: activeTab == 3}">Tracing</a></li>
+            <li><a v-on:click.stop.prevent="cliTab(0)" :class="{active: activeTab == 0}">Actions</a></li>
+            <li><a v-on:click.stop.prevent="cliTab(1)" :class="{active: activeTab == 1}">Variables</a></li>
+            <li><a v-on:click.stop.prevent="cliTab(2)" :class="{active: activeTab == 2}">Runs</a></li>
+            <li><a v-on:click.stop.prevent="cliTab(3)" :class="{active: activeTab == 3}">Tracing</a></li>
         </ul>
     </div>
     <div id="detail-panel">
-        <div v-if="activeTab == 0">
-            <div id="actionlist">
+        <div :class="{hidden: activeTab != 0}">
+            <div id="innerlist">
                 <AppAction
                     v-if="hasActions"
                     v-for="a in actions"
@@ -42,15 +42,36 @@
             />
         </div>
 
-        <div v-else-if="activeTab == 1">
-            <AppCaseVariable :case-info="this.caseInfo" />
+        <div :class="{hidden: activeTab != 1}">
+            <div id="param-list">
+                <div class="param-list-item" v-for="(p, index) in paramList" :key="index">
+                    <a v-on:click.stop.prevent="removeParam(p.name)">
+                        <i class="fa fa-minus-circle"></i>
+                    </a>
+                    <input type="text" v-model="p.name" size="20" /> :
+                    <input type="text" v-model="p.value" size="50" />
+                </div>
+                <div id="new-param-box">
+                    <a v-on:click.stop.prevent="newParam()">
+                        <i class="fa fa-plus"></i> New
+                    </a>
+                </div>
+            </div>
         </div>
 
-        <div v-else-if="activeTab == 2">
-            <AppRunInfo :case-info="this.caseInfo" />
+        <div :class="{hidden: activeTab != 2}">
+            <div id="innerlist">
+                <AppRun
+                    v-if="hasRuns"
+                    v-for="run in runs"
+                    :key="run._id"
+                    :run="run"
+                    @run-clicked="setCurrentRun(run)"
+                />
+            </div>
         </div>
 
-        <div v-else-if="activeTab == 3">
+        <div :class="{hidden: activeTab != 3}">
             Data tracing
         </div>
     </div>
@@ -59,15 +80,17 @@
 
 <script>
 import Vue from 'vue'
+import VueResource from 'vue-resource'
+Vue.use(VueResource)
+
 import AppAction from './app-action.vue'
 import AppActionPanel from './app-action-panel.vue'
-import AppRunInfo from './app-run-info.vue'
+import AppRun from './app-run.vue'
 import AppActionStore from './app-action-store.vue'
-import AppCaseVariable from './app-case-variable.vue'
 import $ from 'jquery'
 
 var AppCaseDetail = Vue.extend({
-    components: {AppAction, AppActionStore, AppActionPanel, AppRunInfo, AppCaseVariable},
+    components: {AppAction, AppActionStore, AppActionPanel, AppRun},
     props: {
         caseInfo: {
             type: Object,
@@ -81,8 +104,13 @@ var AppCaseDetail = Vue.extend({
 
             hasShownStore: false,
             activeTab: 0,
+
             actions: [],
-            currentAction: {},
+            runs: [],
+            paramList: [],
+
+            currentAction: null,
+            currentRun: null
         }
     },
     watch: {
@@ -94,11 +122,16 @@ var AppCaseDetail = Vue.extend({
             this.localCaseInfo = JSON.parse(JSON.stringify(newCaseInfo))
             this.isNew = newCaseInfo.isNew
             this.refreshActionList(true)
+            this.initRuns()
+            this.initParameters()
         }
     },
     computed: {
-        hasActions: function () {
+        hasActions () {
             return this.actions && this.actions.length > 0
+        },
+        hasRuns () {
+            return this.runs && this.runs.length > 0
         },
         hasCurrentAction: function () {
             if (!this.hasActions) {
@@ -109,14 +142,51 @@ var AppCaseDetail = Vue.extend({
     },
     mounted() {
         this.refreshActionList(true)
+        this.initRuns()
+        this.initParameters()
     },
     methods: {
+        initParameters() {
+            if (!this.localCaseInfo.hasOwnProperty('params')) {
+                this.localCaseInfo['params'] = {}
+            }
+            var pdict = this.localCaseInfo.params
+            this.paramList = Object.keys(pdict).map(key => ({
+                name:  key,
+                value: pdict[key]
+            }))
+        },
+        initRuns() {
+            console.log('init runs for case: ' + this.caseInfo.name)
+            if (this.isNew) {
+                console.log('new case, no need to fetch runs')
+                this.runs = []
+                return
+            }
+
+            var self = this
+            var url = `/case/${encodeURI(self.caseInfo._id)}/runs`
+
+            this.$http.get(url).then(
+                resp => {
+                    console.log('get runs succeeded')
+                    this.runs = resp.body
+                },
+                resp => {
+                    console.log('http put failed: ' + resp.body)
+                }
+            )
+        },
         cliTab(item) {
             this.activeTab = item
         },
         setCurrentAction(act) {
             console.log('set current action to: ' + JSON.stringify(act))
             this.currentAction = act
+        },
+        setCurrentRun(run) {
+            console.log('set current run to: ' + JSON.stringify(run))
+            this.currentRun = run
         },
         addNewAction() {
             var newAction = {
@@ -138,22 +208,47 @@ var AppCaseDetail = Vue.extend({
                 return
             }
             console.log('refreshing action list')
-            var self = this
-            var url = `/case/${encodeURI(self.caseInfo._id)}/actions`
-            $.get(url, function (data) {
-                if (data && data.length > 0) {
-                    self.actions = data
-                }
-                else {
-                    self.actions = []
-                }
-            })
+            var url = `/case/${encodeURI(this.caseInfo._id)}/actions`
 
-            if (toCloseActionPanel) {
-                self.currentAction = {}
+            this.$http.get(url).then(
+                resp => {
+                    console.log('get actions succeeded')
+                    this.actions = resp.body
+                    if (toCloseActionPanel) {
+                        this.currentAction = {}
+                    }
+                },
+                resp => {
+                    console.log('failed to get actions')
+                }
+            )
+        },
+        newParam() {
+            console.log('adding a new param')
+            this.paramList.push({
+                name: '',
+                value: ''
+            })
+        },
+        removeParam(key) {
+            console.log('removing a param: ' + key)
+            var r = confirm("remove this param?")
+            if (r != true) {
+                return
             }
+            var index = this.paramList.findIndex(i => i.name === key)
+            this.paramList.splice(index, 1)
         },
         saveCase() {
+            // get new param list
+            this.localCaseInfo.params = {}
+            for (var item of this.paramList) {
+                var _k = item.name.trim()
+                if (_k !== 'new' && _k !== '') {
+                    this.localCaseInfo.params[_k] = item.value
+                }
+            }
+
             if (this.isNew) {
                 console.log('saving new case')
                 var self = this
@@ -204,6 +299,9 @@ export default AppCaseDetail
 </script>
 
 <style scoped>
+div.hidden {
+    display: none;
+}
 div#app-detail {
     float: left;
     padding: 10px;
@@ -275,7 +373,7 @@ div#detail-panel {
     min-width: 1000px;
 }
 
-div#actionlist {
+div#innerlist {
     width: 300px;
     float: left;
 }
@@ -287,5 +385,35 @@ div#newaction {
     cursor: pointer;
     color: #ececec;
     border: solid 2px #ececec;
+}
+
+/* for params */
+div#new-param-box {
+    margin-top: 10px;
+}
+div#new-param-box a {
+    font-size: 18px;
+    text-decoration: none;
+    color: gray;
+    cursor: pointer;
+    display: block;
+}
+
+div.param-list-item input[type='text'] {
+    font-weight: 200;
+    font-size: 18px;
+    background-color: #fff;
+    border: solid 1px gray;
+}
+
+div.param-list-item {
+    margin-bottom: 10px;
+}
+
+div.param-list-item a {
+    font-size: 18px;
+    text-decoration: none;
+    color: #00B140;
+    cursor: pointer;
 }
 </style>

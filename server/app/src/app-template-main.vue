@@ -1,7 +1,7 @@
 <template>
 <div>
     <app-sidebar :what-for="whatFor" @item-clicked="showDetail"></app-sidebar>
-    <app-template-detail v-if="hasTpl" :template-object="tplObject"></app-template-detail>
+    <app-template-detail v-if="hasTpl" :template-object="tplObject" @save-succeeded="itemSaved"></app-template-detail>
 </div>
 </template>
 
@@ -25,7 +25,13 @@ var AppTemplateMain = Vue.extend({
     },
     methods: {
         showDetail(tplObject) {
+            console.log('>>> item clicked!')
             this.tplObject = tplObject
+        },
+        itemSaved() {
+            console.log('>>> item detail is saved!')
+            // TODO: refresh sidebar
+            window.location.reload() // temporary solution
         }
     }
 })

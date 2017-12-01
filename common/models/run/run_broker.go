@@ -33,7 +33,7 @@ func GetAll(tc *C.TestCase) (result []Run, err error) {
 }
 
 func GetAllByCaseId(caseId bson.ObjectId) (result []Run, err error) {
-	err = col.Find(bson.M{"case_id": caseId}).All(&result)
+	err = col.Find(bson.M{"case_id": caseId}).Sort("-started_at").All(&result)
 	return
 }
 
@@ -43,7 +43,7 @@ func GetAllByCaseIdStr(caseId string) (result []Run, err error) {
 		err = errors.New("invalid case Id")
 		return
 	}
-	err = col.Find(bson.M{"case_id": cid}).All(&result)
+	err = col.Find(bson.M{"case_id": cid}).Sort("-started_at").All(&result)
 	return
 }
 
