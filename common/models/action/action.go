@@ -17,6 +17,7 @@ type Action struct {
 	CaseId     bson.ObjectId          `json:"case_id" bson:"case_id"`
 	TemplateId bson.ObjectId          `json:"template_id" bson:"template_id"`
 	Name       string                 `json:"name" bson:"name"`
+	Desc       string                 `json:"desc" bson:"desc"`
 	SeqNo      int                    `json:"seq_no" bson:"seq_no"`
 	Params     map[string]interface{} `json:"params" bson:"params"`
 	Disabled   bool                   `json:"disabled" bson:"disabled"`

@@ -2,6 +2,7 @@ package action
 
 import (
 	"errors"
+	"fmt"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
@@ -64,6 +65,17 @@ func CountByCase(caseId bson.ObjectId) (result int, err error) {
 	return col.Find(bson.M{"case_id": caseId, "removed": false}).Count()
 }
 
+func MaxSeqNoInCase(caseId bson.ObjectId) (result int, err error) {
+	result = 0
+	var act Action
+	err = col.Find(bson.M{"case_id": caseId, "removed": false}).Sort("-seq_no").One(&act)
+	if err != nil {
+		err = errors.New(fmt.Sprintf("case_id: %v, sortby seq_no failed: %v", caseId, err))
+	}
+	result = act.SeqNo
+	return
+}
+
 func New() *Action {
 	return &Action{
 		Id:     bson.NewObjectId(),
@@ -77,12 +89,8 @@ func (a *Action) Save() (err error) {
 			a.Id = bson.NewObjectId()
 		}
 
-		actCount, err := CountByCase(a.CaseId)
-		if err != nil {
-			return err
-		}
-
-		a.SeqNo = actCount + 5
+		maxSeqNo, _ := MaxSeqNoInCase(a.CaseId) //TODO: investigate: why blank case (no action) will fail to sort
+		a.SeqNo = maxSeqNo + 5
 		_, err = col.Upsert(bson.M{"_id": a.Id}, *a)
 	} else {
 		err = errors.New("Case Id or Template Id is invalid")
@@ -96,6 +104,5 @@ func (a *Action) Delete() (err error) {
 		return
 	}
 	a.Removed = true
-	_, err = col.Upsert(bson.M{"_id": a.Id}, *a)
-	return
+	return a.Save()
 }

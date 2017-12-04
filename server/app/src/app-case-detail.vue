@@ -82,7 +82,6 @@ import AppAction from './app-action.vue'
 import AppActionPanel from './app-action-panel.vue'
 import AppRun from './app-run.vue'
 import AppRunPanel from './app-run-panel.vue'
-import $ from 'jquery'
 
 var AppCaseDetail = Vue.extend({
     components: {AppAction, AppActionPanel, AppRun, AppRunPanel},
@@ -97,7 +96,6 @@ var AppCaseDetail = Vue.extend({
             localCaseInfo: JSON.parse(JSON.stringify(this.caseInfo)),
             isNew: this.caseInfo.isNew,
 
-            hasShownStore: false,
             activeTab: 0,
 
             actions: [],
@@ -126,10 +124,7 @@ var AppCaseDetail = Vue.extend({
             return this.runs && this.runs.length > 0
         },
         hasCurrentAction() {
-            if (!this.hasActions) {
-                this.currentAction = {}
-            }
-            return this.currentAction.name !== undefined
+            return this.currentAction !== null
         },
         hasCurrentRun() {
             return this.currentRun !== null
@@ -152,16 +147,16 @@ var AppCaseDetail = Vue.extend({
             }))
         },
         initRuns() {
-            console.log('init runs for case: ' + this.caseInfo.name)
-            if (this.isNew) {
+            this.currentRun = null
+            console.log(`init runs for case: ${this.localCaseInfo.name}, isNew: ${!!this.isNew}`)
+
+            if (!!this.isNew) {
                 console.log('new case, no need to fetch runs')
                 this.runs = []
                 return
             }
 
-            var self = this
-            var url = `/case/${encodeURI(self.caseInfo._id)}/runs`
-
+            var url = `/case/${encodeURI(this.caseInfo._id)}/runs`
             this.$http.get(url).then(
                 resp => {
                     console.log('get runs succeeded')
@@ -169,8 +164,7 @@ var AppCaseDetail = Vue.extend({
                 },
                 resp => {
                     console.log('http put failed: ' + resp.body)
-                }
-            )
+                })
         },
         cliTab(item) {
             this.activeTab = item
@@ -185,18 +179,20 @@ var AppCaseDetail = Vue.extend({
         },
         addNewAction() {
             var newAction = {
-                case_path: this.caseInfo.path,
-                case_name: this.caseInfo.name,
+                case_id: this.localCaseInfo._id,
                 name: "action-new",
                 desc: "this is a new action.",
-                snippet: "",
                 isNew: true
             }
             console.log('add action at list: ' + JSON.stringify(newAction))
+            if (!this.actions) {
+                this.actions = []
+            }
             this.actions.push(newAction)
+            this.currentAction = newAction
         },
         refreshActionList(toCloseActionPanel) {
-            if (this.isNew) {
+            if (!!this.isNew) {
                 console.log('new case, no fetching actions')
                 this.actions = []
                 this.currentAction = {}
@@ -210,13 +206,12 @@ var AppCaseDetail = Vue.extend({
                     console.log('get actions succeeded')
                     this.actions = resp.body
                     if (toCloseActionPanel) {
-                        this.currentAction = {}
+                        this.currentAction = null
                     }
                 },
                 resp => {
                     console.log('failed to get actions')
-                }
-            )
+                })
         },
         newParam() {
             console.log('adding a new param')
@@ -244,49 +239,46 @@ var AppCaseDetail = Vue.extend({
                 }
             }
 
-            if (this.isNew) {
-                console.log('saving new case')
-                var self = this
-                $.post("/cases", JSON.stringify(self.localCaseInfo), function (data) {
-                    console.log(JSON.stringify(data))
-                    self.isNew = false
-                    // self.$emit('refresh-list-required')
-                }, "json")
+            if (!!this.isNew) {
+                console.log('saving new case...')
+                this.$http.post('/cases', this.localCaseInfo).then(
+                    resp => {
+                        console.log('new case saved: ' + JSON.stringify(resp.body))
+                    },
+                    resp => {
+                        console.log('http failed: ' + JSON.stringify(resp.body))
+                    })
             }
             else {
                 console.log('update existing one')
                 var oldCaseUrl = `/case/${encodeURI(this.caseInfo._id)}`
-                $.ajax({
-                    url: oldCaseUrl,
-                    type: 'PUT',
-                    data: JSON.stringify(this.localCaseInfo),
-                    success: function (resp) {
-                        console.log(JSON.stringify(resp))
-                        // self.$emit('refresh-list-required')
+                this.$http.put(oldCaseUrl, this.localCaseInfo).then(
+                    resp => {
+                        console.log('case updated: ' + JSON.stringify(resp.body))
                     },
-                    error: function (resp) {
-                        console.log(JSON.stringify(resp))
-                    }
-                })
+                    resp => {
+                        console.log('http failed: ' + JSON.stringify(resp.body))
+                    })
             }
         },
         runCase() {
-            if (this.isNew) {
+            if (!!this.isNew) {
                 alert('cannot run an unsaved case')
                 console.log('cannot run an unsaved case')
                 return
             }
 
-            console.log('to run case: ' + this.caseInfo.name)
+            console.log('run case: ' + this.caseInfo.name)
             var url = `/case/${encodeURI(this.caseInfo._id)}/runs`
-            var self = this
-            $.ajax({
-                url: url,
-                type: 'POST',
-                success: function (resp) {
-                    console.log('success: add case into run-queue: ' + JSON.stringify(resp))
-                }
-            })
+
+            this.$http.post(url).then(
+                resp => {
+                    console.log('http success: ' + JSON.stringify(resp.body))
+                    this.initRuns()
+                },
+                resp => {
+                    console.log('http failed: ' + JSON.stringify(resp.body))
+                })
         }
     }
 })

@@ -54,19 +54,23 @@ func (server *Server) Run() {
 		}
 	})
 
-	// // create case
-	// m.Post("/cases", binding.Json(models.Case{}), func(c models.Case, ferr binding.Errors, r render.Render) {
-	// 	if ferr.Count() > 0 {
-	// 		r.JSON(200, Ex{"error": "binding case post data failed"})
-	// 	} else {
-	// 		c0 := models.NewCase(c.Path, c.Name, c.Desc)
-	// 		if err := c0.Save(); err != nil {
-	// 			r.JSON(200, Ex{"error": err.Error()})
-	// 		} else {
-	// 			r.JSON(200, *c0)
-	// 		}
-	// 	}
-	// })
+	// create new case
+	m.Post("/cases", binding.Json(TC.TestCase{}), func(newTC TC.TestCase, ferr binding.Errors, r render.Render) {
+		if ferr.Count() > 0 {
+			r.JSON(200, Ex{"error": "binding case post data failed"})
+			return
+		}
+
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		TC.SetCol(mongo)
+
+		if err := newTC.Save(); err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, newTC)
+		}
+	})
 
 	// update case
 	m.Put("/case/:cid", binding.Json(TC.TestCase{}), func(p martini.Params, newTC TC.TestCase, ferr binding.Errors, r render.Render) {
@@ -183,52 +187,75 @@ func (server *Server) Run() {
 	// 	}
 	// })
 
-	// // add a new action to a case
-	// m.Post("/actions", binding.Json(models.Action{}), func(a models.Action, ferr binding.Errors, r render.Render) {
-	// 	if ferr.Count() > 0 {
-	// 		r.JSON(200, Ex{"error": "binding action post data failed"})
-	// 		return
-	// 	}
+	// add an action to a case
+	m.Post("/actions", binding.Json(A.Action{}), func(a A.Action, ferr binding.Errors, r render.Render) {
+		if ferr.Count() > 0 {
+			r.JSON(200, Ex{"error": "binding action post data failed"})
+			return
+		}
 
-	// 	if err := a.Save(); err != nil {
-	// 		r.JSON(200, Ex{"error": err.Error()})
-	// 	} else {
-	// 		r.JSON(200, a)
-	// 	}
-	// })
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		A.SetCol(mongo)
 
-	// // update an action
-	// m.Put("/case/:cpath/:cname/:name", binding.Json(models.Action{}), func(newAction models.Action, p martini.Params, ferr binding.Errors, r render.Render) {
-	// 	if ferr.Count() > 0 {
-	// 		r.JSON(200, Ex{"error": "binding action post data failed"})
-	// 		return
-	// 	}
+		if err := a.Save(); err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, a)
+		}
+	})
 
-	// 	a0 := models.NewAction(p["cpath"], p["cname"], p["name"])
-	// 	if err := a0.UpdateTo(&newAction); err != nil {
-	// 		r.JSON(200, Ex{"error": err.Error()})
-	// 	} else {
-	// 		r.JSON(200, newAction)
-	// 	}
-	// })
+	// update an action
+	m.Put("/action/:aid", binding.Json(A.Action{}), func(newAction A.Action, p martini.Params, ferr binding.Errors, r render.Render) {
+		if ferr.Count() > 0 {
+			r.JSON(200, Ex{"error": "binding action post data failed"})
+			return
+		}
 
-	// m.Delete("/case/:cpath/:cname/:name", func(p martini.Params, r render.Render) {
-	// 	err := models.DeleteAction(p["cpath"], p["cname"], p["name"])
-	// 	if err != nil {
-	// 		r.JSON(200, Ex{"error": err.Error()})
-	// 	} else {
-	// 		r.JSON(200, Ex{"ok": "deleted"})
-	// 	}
-	// })
+		aid := bson.ObjectIdHex(p["aid"])
+		if !aid.Valid() {
+			r.JSON(200, Ex{"error": "invalid action id"})
+			return
+		}
 
-	// m.Get("/actions", func(r render.Render) {
-	// 	actions, err := models.FindAllActions()
-	// 	if err != nil {
-	// 		r.JSON(200, Ex{"error": err.Error()})
-	// 	} else {
-	// 		r.JSON(200, actions)
-	// 	}
-	// })
+		if aid != newAction.Id {
+			r.JSON(200, Ex{"error": "action id mismatches"})
+			return
+		}
+
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		A.SetCol(mongo)
+
+		if err := newAction.Save(); err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, newAction)
+		}
+	})
+
+	m.Delete("/action/:aid", func(p martini.Params, r render.Render) {
+		aid := bson.ObjectIdHex(p["aid"])
+		if !aid.Valid() {
+			r.JSON(200, Ex{"error": "invalid action id"})
+			return
+		}
+
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		A.SetCol(mongo)
+
+		act, err := A.GetOneById(aid)
+		if err != nil {
+			r.JSON(200, Ex{"error": "failed to get action"})
+		}
+
+		if err := act.Delete(); err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, Ex{"ok": "marked as removed"})
+		}
+	})
 
 	m.Get("/templates", func(r render.Render) {
 		mongo := S.AskForMongo()
@@ -240,6 +267,26 @@ func (server *Server) Run() {
 			r.JSON(200, Ex{"error": err.Error()})
 		} else {
 			r.JSON(200, templates)
+		}
+	})
+
+	// get a template inro
+	m.Get("/template/:tid", func(p martini.Params, r render.Render) {
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		T.SetCol(mongo)
+
+		tid := bson.ObjectIdHex(p["tid"])
+		if !tid.Valid() {
+			r.JSON(200, Ex{"error": "invalid template id"})
+			return
+		}
+
+		template, err := T.GetOneById(tid)
+		if err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, template)
 		}
 	})
 

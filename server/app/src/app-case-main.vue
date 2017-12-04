@@ -1,7 +1,7 @@
 <template>
 <div>
     <app-sidebar :what-for="whatFor" @item-clicked="showCaseDetail"></app-sidebar>
-    <app-case-detail v-if="hasCInfo" :case-info="cinfo"></app-case-detail>
+    <app-case-detail v-if="hasCInfo" :case-info="currentCase"></app-case-detail>
 </div>
 </template>
 
@@ -15,17 +15,17 @@ var AppCaseMain = Vue.extend({
     data() {
         return {
             whatFor: 'cases',
-            cinfo: null
+            currentCase: null
         }
     },
     computed: {
         hasCInfo() {
-            return this.cinfo !== null
+            return this.currentCase !== null
         }
     },
     methods: {
         showCaseDetail(caseObject) {
-            this.cinfo = caseObject
+            this.currentCase = caseObject
         }
     }
 })

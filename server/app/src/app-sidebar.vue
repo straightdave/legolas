@@ -82,6 +82,7 @@ export default {
                 path: 'default',
                 name: `${ this.whatFor }-new`,
                 desc: `new item of ${ this.whatFor }`,
+                created_at: new Date(),
                 isNew: true
             }
             this.items.unshift(newOne)

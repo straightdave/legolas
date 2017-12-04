@@ -158,8 +158,7 @@ var AppTemplateDetail = Vue.extend({
                     },
                     resp => {
                         console.log('http put failed: ' + JSON.stringify(resp))
-                    }
-                )
+                    })
             }
             else {
                 console.log('creating new template...')
@@ -170,8 +169,7 @@ var AppTemplateDetail = Vue.extend({
                     },
                     resp => {
                         console.log('http put failed: ' + JSON.stringify(resp))
-                    }
-                )
+                    })
             }
         }
     }
@@ -188,7 +186,6 @@ div#app-detail {
     float: left;
     padding: 10px;
     min-width: 1100px;
-    overflow: scroll;
 }
 
 div#detail-header {
