@@ -142,7 +142,7 @@ var AppActionPanel = Vue.extend({
                 })
         },
         initParameters() {
-            if (this.isNew) {
+            if (!!this.isNew) {
                 console.log('== init parameters for new action ...')
                 if (this.localActionObject.hasOwnProperty('template_id')) {
                     console.log('get default param of template id: ' + this.localActionObject.template_id)
@@ -183,7 +183,7 @@ var AppActionPanel = Vue.extend({
         removeParam(key) {
             console.log('removing a param: ' + key)
             var r = confirm("remove this param?")
-            if (r != true) {
+            if (!r) {
                 return
             }
             var index = this.paramList.findIndex(i => i.name === key)
@@ -198,7 +198,13 @@ var AppActionPanel = Vue.extend({
                 }
             }
 
-            if (this.isNew) {
+            if (!this.localActionObject.hasOwnProperty('case_id')) {
+                console.log('saving action to a new case')
+                alert('Please save the case first!')
+                return
+            }
+
+            if (!!this.isNew) {
                 console.log('save new action: ' + JSON.stringify(this.localActionObject))
 
                 this.$http.post('/actions', this.localActionObject).then(
@@ -233,14 +239,14 @@ var AppActionPanel = Vue.extend({
             }
         },
         deleteAction() {
-            if (this.isNew) {
+            if (!!this.isNew) {
                 console.log('delete a new (unsafed) action')
                 this.$emit('action-list-refresh-needed', true)
                 return
             }
 
             var r = confirm("delete this action (not an unsafed one)?")
-            if (r != true) {
+            if (!r) {
                 return
             }
 
@@ -338,7 +344,6 @@ div#action-panel button {
 
 div.action-inner-div {
     margin-bottom: 10px;
-    padding: 5px;
 }
 
 div.capital {

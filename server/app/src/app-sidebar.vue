@@ -54,7 +54,7 @@ export default {
             return result
         }
     },
-    mounted: function () {
+    mounted() {
         this.getItems(this.whatFor)
     },
     methods: {

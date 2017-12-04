@@ -178,6 +178,7 @@ var AppCaseDetail = Vue.extend({
             this.currentRun = run
         },
         addNewAction() {
+            // WARNING: it could be new case (no _id yet)
             var newAction = {
                 case_id: this.localCaseInfo._id,
                 name: "action-new",
@@ -195,9 +196,10 @@ var AppCaseDetail = Vue.extend({
             if (!!this.isNew) {
                 console.log('new case, no fetching actions')
                 this.actions = []
-                this.currentAction = {}
+                this.currentAction = null
                 return
             }
+
             console.log('refreshing action list')
             var url = `/case/${encodeURI(this.caseInfo._id)}/actions`
 
@@ -244,6 +246,7 @@ var AppCaseDetail = Vue.extend({
                 this.$http.post('/cases', this.localCaseInfo).then(
                     resp => {
                         console.log('new case saved: ' + JSON.stringify(resp.body))
+                        this.$emit('refresh-sidebar-list')
                     },
                     resp => {
                         console.log('http failed: ' + JSON.stringify(resp.body))
@@ -255,6 +258,7 @@ var AppCaseDetail = Vue.extend({
                 this.$http.put(oldCaseUrl, this.localCaseInfo).then(
                     resp => {
                         console.log('case updated: ' + JSON.stringify(resp.body))
+                        this.$emit('refresh-sidebar-list')
                     },
                     resp => {
                         console.log('http failed: ' + JSON.stringify(resp.body))

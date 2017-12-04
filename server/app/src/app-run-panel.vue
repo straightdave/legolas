@@ -1,10 +1,10 @@
 <template>
 <div id="run-panel">
     <div id="run-title">
-        {{ runObject._id }}
+        <span>{{ runObject._id }}</span>
+        <span id="refresh-btn"><a @click.stop.prevent="refreshRunDetails"><i class="fa fa-refresh"></i></a></span>
     </div>
     <div id="job-state-list">
-
         <div id="job-item" v-for="job in jobStates" :key="job.action_id">
             <div id="job-title">
                 {{ job.action_name }} - {{ job.state }} - {{ job.error }}
@@ -38,6 +38,9 @@ var AppRunDetail = Vue.extend({
         runObject(newRunObject) {
             this.refreshRunDetails()
         }
+    },
+    mounted() {
+        this.refreshRunDetails()
     },
     methods: {
         refreshRunDetails() {
@@ -83,8 +86,23 @@ div#run-title {
     background-color: #ececec;
     font-family: 'Consolas', 'source-code-pro', monospace;
     font-size: 18px;
-    padding: 3px 0px;
     margin-bottom: 5px;
+    padding: 3px;
+    position: relative;
+}
+
+span#refresh-btn {
+    display: inline-block;
+    position: absolute;
+    right: 5px;
+
+    font-size: 18px;
+    font-weight: 200;
+    cursor: pointer;
+}
+
+div#job-item > div {
+    padding: 3px;
 }
 
 </style>
