@@ -1,19 +1,8 @@
 <template>
 <div>
-    <div class="namebox">
-        Some Data 1
+    <div id="one-traced" v-for="td in tracedData">
+        <vue-chart type="line" :data="td"></vue-chart>
     </div>
-    <vue-chart type="line" :data="myData"></vue-chart>
-
-    <div class="namebox">
-        Some Data 2
-    </div>
-    <vue-chart type="line" :data="myData"></vue-chart>
-
-    <div class="namebox">
-        Some Data 3
-    </div>
-    <vue-chart type="line" :data="myData"></vue-chart>
 </div>
 </template>
 
@@ -26,34 +15,70 @@ Vue.use(VueChart)
 
 var AppDataTracing = Vue.extend({
     props: {
-        caseObject: {
-            type: Object,
+        runObjects: {
+            type: Array,
             required: true
         }
     },
     data() {
         return {
-            myData: {
-                labels: ['run 1', 'run 2', 'run 3', 'run 4', 'run 5'],
-                datasets: [
-                    {
-                        label: 'Some Data',
-                        data: [10, 20, 0, 30, 40]
-                    }
-                ]
-            }
+            tracedData: []
         }
     },
     watch: {
-        caseObject(newCaseObject) {
-            console.log('use clicked another case')
+        runObjects(newRuns) {
+            console.log('use clicked another case (so new runs)')
+            this.initTracedData()
         }
     },
     mounted() {
         console.log('chart mounted')
+        this.initTracedData()
     },
     methods: {
+        initTracedData() {
+            this.tracedData = []
 
+            var arrayRunIds = []
+            var arrayNames = {} // dict of key - 0
+            for (var run of this.runObjects) {
+                arrayRunIds.push(run._id)
+
+                if (run.traced_data) {
+                    for (var k of Object.keys(run.traced_data)) {
+                        arrayNames[k] = 0
+                    }
+                }
+            }
+            arrayNames = Object.keys(arrayNames)
+
+            for (var name of arrayNames) {
+                var data_array = []
+                for (var run of this.runObjects) {
+                    if (run.traced_data[name]) {
+                        data_array.push(run.traced_data[name])
+                    }
+                    else {
+                        data_array.push(0)
+                    }
+                }
+                console.log(`got data array for name:${name} -> ${JSON.stringify(data_array)}`)
+                var _t = {
+                    labels: arrayRunIds,
+                    datasets: []
+                }
+                console.log("_t= " + JSON.stringify(_t))
+                _t.datasets.push({
+                        label: name,
+                        data: data_array
+                })
+                console.log("_t= " + JSON.stringify(_t))
+
+                this.tracedData.push(_t)
+            }
+
+            console.log('data: ' + JSON.stringify(this.tracedData))
+        }
     }
 })
 export default AppDataTracing

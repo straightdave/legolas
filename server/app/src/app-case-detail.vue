@@ -67,7 +67,7 @@
         </div>
 
         <div :class="{hidden: activeTab != 3}">
-            <AppDataTracing :case-object="localCaseInfo" />
+            <AppDataTracing v-if="hasRuns" :run-objects="runs" />
         </div>
     </div>
 </div>

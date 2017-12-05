@@ -89,8 +89,10 @@ func (a *Action) Save() (err error) {
 			a.Id = bson.NewObjectId()
 		}
 
-		maxSeqNo, _ := MaxSeqNoInCase(a.CaseId) //TODO: investigate: why blank case (no action) will fail to sort
-		a.SeqNo = maxSeqNo + 5
+		if a.SeqNo < 1 {
+			maxSeqNo, _ := MaxSeqNoInCase(a.CaseId) //TODO: investigate: why blank case (no action) will fail to sort
+			a.SeqNo = maxSeqNo + 5
+		}
 		_, err = col.Upsert(bson.M{"_id": a.Id}, *a)
 	} else {
 		err = errors.New("Case Id or Template Id is invalid")
