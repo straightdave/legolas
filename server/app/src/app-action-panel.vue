@@ -75,8 +75,6 @@ import Vue from 'vue'
 import VueResource from 'vue-resource'
 Vue.use(VueResource)
 
-import $ from 'jquery'
-
 var AppActionPanel = Vue.extend({
     props: {
         actionObject: {

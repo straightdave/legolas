@@ -37,6 +37,7 @@ class Legolas:
         self._ctx = json.loads(cstr)
         self._mongo = MongoClient()          # TODO: using specific host and port
         self._param_in_case = {}
+        self._context_of_case = {}
         self._param_in_action = {}
         self._prev_results = {}
         self._results_dict = {}
@@ -54,11 +55,19 @@ class Legolas:
         # init params and prev result
         self._set_param_of_action()
         self._set_param_of_case()
+        self._set_context_of_case()
         self._set_prev_results()
 
     #----------------------
     # helpers used by init
     #----------------------
+    def _set_context_of_case(self):
+        print(">>> loading context dict")
+        col = self._mongo.legolas.runs
+        rr = col.find_one({"_id": ObjectId(self.run_id)})
+        if rr:
+            self._context_of_case = rr["context"]
+
     def _set_param_of_action(self):
         print(">>> loading params of the action")
         col = self._mongo.legolas.actions
@@ -92,6 +101,16 @@ class Legolas:
     #-----------------------------
     def _upload_results(self):
         """uploading results to jobstate and traced data to case run"""
+        print(">>> uploading context data to run")
+        if self._context_of_case:
+            col = self._mongo.legolas.runs
+            t = col.find_one_and_update(
+                {"_id": ObjectId(self.run_id)},
+                {'$set': {'context': self._context_of_case}},
+                return_document=ReturnDocument.AFTER)
+            if t:
+                print(">>> upload context data succeeded")
+
         print(">>> uploading results to jobstate")
         if self._results_dict:
             col = self._mongo.legolas.jobstates
@@ -159,6 +178,18 @@ class Legolas:
             name = str(name)
             name = name.replace(".", "_")
             self._results_dict[name] = value
+
+    def save_context(self, name, value):
+        if name:
+            name = str(name)
+            name = name.replace(".", "_")
+            self._context_of_case[name] = value
+
+    def get_context(self, name):
+        if name:
+            name = str(name)
+            name = name.replace(".", "_")
+            return self._context_of_case[name]
 
     def trace_data(self, name, value):
         if name:
