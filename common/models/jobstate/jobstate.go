@@ -30,7 +30,9 @@ type JobState struct {
 	StartedAt string                 `json:"started_at" bson:"started_at"`
 	EndedAt   string                 `json:"ended_at" bson:"ended_at"`
 
-	// informative items for less queries from frontend
+	// informative for less queries from frontend
+	// it stands for the name of the action at triggering time.
+	// The action may change its name later, but this doesn't change.
 	ActionName string `json:"action_name" bson:"action_name"`
 }
 

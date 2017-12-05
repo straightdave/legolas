@@ -7,10 +7,11 @@ import (
 )
 
 type Run struct {
-	Id        bson.ObjectId `json:"_id" bson:"_id"`
-	CaseId    bson.ObjectId `json:"case_id" bson:"case_id"`
-	StartedAt time.Time     `json:"started_at" bson:"started_at"`
-	EndedAt   time.Time     `json:"ended_at" bson:"ended_at"`
+	Id         bson.ObjectId          `json:"_id" bson:"_id"`
+	CaseId     bson.ObjectId          `json:"case_id" bson:"case_id"`
+	StartedAt  time.Time              `json:"started_at" bson:"started_at"`
+	EndedAt    time.Time              `json:"ended_at" bson:"ended_at"`
+	TracedData map[string]interface{} `json:"traced_data" bson:"traced_data"`
 }
 
 func (r *Run) Json() ([]byte, error) {
