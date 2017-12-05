@@ -202,6 +202,15 @@ var AppActionPanel = Vue.extend({
                 return
             }
 
+            if (this.localActionObject.hasOwnProperty('seq_no')) {
+                var seq = this.localActionObject.seq_no
+                this.localActionObject.seq_no = parseInt(seq)
+            }
+            else {
+                this.localActionObject.seq_no = 0
+            }
+
+
             if (!!this.isNew) {
                 console.log('save new action: ' + JSON.stringify(this.localActionObject))
 

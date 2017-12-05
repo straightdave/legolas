@@ -253,7 +253,7 @@ pre#brace-editor {
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
     font-size: 18px;
     font-weight: normal;
-    height: 500px;
+    min-height: 600px;
 }
 
 div#new-param-box {

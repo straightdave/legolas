@@ -67,7 +67,7 @@
         </div>
 
         <div :class="{hidden: activeTab != 3}">
-            Data tracing
+            <AppDataTracing :case-object="localCaseInfo" />
         </div>
     </div>
 </div>
@@ -82,9 +82,10 @@ import AppAction from './app-action.vue'
 import AppActionPanel from './app-action-panel.vue'
 import AppRun from './app-run.vue'
 import AppRunPanel from './app-run-panel.vue'
+import AppDataTracing from './app-data-tracing.vue'
 
 var AppCaseDetail = Vue.extend({
-    components: {AppAction, AppActionPanel, AppRun, AppRunPanel},
+    components: {AppAction, AppActionPanel, AppRun, AppRunPanel, AppDataTracing},
     props: {
         caseInfo: {
             type: Object,
@@ -178,7 +179,7 @@ var AppCaseDetail = Vue.extend({
             this.currentRun = run
         },
         addNewAction() {
-            // WARNING: it could be new case (no _id yet)
+            // WARNING: it could be new case (no _id)
             var newAction = {
                 case_id: this.localCaseInfo._id,
                 name: "action-new",
