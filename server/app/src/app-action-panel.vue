@@ -105,7 +105,6 @@ var AppActionPanel = Vue.extend({
             console.log('changed to action: ' + JSON.stringify(this.localActionObject))
 
             this.initTemplateInfo()
-
             this.notToShowStore = newActionObject.hasOwnProperty('template_id') && newActionObject.template_id != ''
         }
     },
@@ -224,7 +223,7 @@ var AppActionPanel = Vue.extend({
                             return
                         }
                         this.isNew = false
-                        this.$emit('action-list-refresh-needed', false)
+                        this.$emit('action-list-refresh-needed', true)
                     },
                     resp => {
                         console.log('http failed: ' + JSON.stringify(resp.body))
@@ -240,7 +239,7 @@ var AppActionPanel = Vue.extend({
                             return
                         }
                         console.log('http succeeded: ' + JSON.stringify(resp.body))
-                        this.$emit('action-list-refresh-needed', false)
+                        this.$emit('action-list-refresh-needed', true)
                     },
                     resp => {
                         console.log('http failed: ' + JSON.stringify(resp.body))
