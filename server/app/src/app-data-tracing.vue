@@ -1,20 +1,23 @@
 <template>
-<div>
-    <div id="one-traced" v-for="td in tracedData">
-        <vue-chart type="line" :data="td"></vue-chart>
+<div v-if="hasTracedData">
+    <div id="chart-list" v-for="td in tracedData">
+        <vue-chart
+            type="line" :data="td"
+            :options="{responsive: false}"
+            :width="800" />
     </div>
 </div>
 </template>
 
 <script>
 import Vue from 'vue'
-import VueResource from 'vue-resource'
 import VueChart from 'vue-chart-js'
-Vue.use(VueResource)
 Vue.use(VueChart)
 
 var AppDataTracing = Vue.extend({
     props: {
+        // due to the v-if at case-detail, the runObjects we got here are all have values
+        // i.e. the case has runs, thought in those runs there might be no traced data
         runObjects: {
             type: Array,
             required: true
@@ -22,22 +25,31 @@ var AppDataTracing = Vue.extend({
     },
     data() {
         return {
-            tracedData: []
+            tracedData: [],
+            hasTracedData: false
         }
     },
     watch: {
         runObjects(newRuns) {
             console.log('use clicked another case (so new runs)')
+
+            this.hasTracedData = false
+            this.$forceUpdate()
+
             this.initTracedData()
+            this.hasTracedData = this.tracedData.length > 0
         }
     },
-    mounted() {
-        console.log('chart mounted')
+    created() {
+        console.log('chart created')
         this.initTracedData()
+        this.hasTracedData = this.tracedData.length > 0
     },
     methods: {
         initTracedData() {
-            this.tracedData = []
+
+            this.tracedData.length = 0
+            console.log('init traced data: ' + JSON.stringify(this.tracedData))
 
             var arrayRunIds = []
             var arrayNames = {} // dict of key - 0
@@ -50,7 +62,14 @@ var AppDataTracing = Vue.extend({
                     }
                 }
             }
+            // shorten run IDs
+            arrayRunIds = arrayRunIds.map(id => id.substr(id.length - 5))
             arrayNames = Object.keys(arrayNames)
+
+            if (arrayNames.length === 0) {
+                console.log('no data being traced. ingored')
+                return
+            }
 
             for (var name of arrayNames) {
                 var data_array = []
@@ -59,7 +78,7 @@ var AppDataTracing = Vue.extend({
                         data_array.push(run.traced_data[name])
                     }
                     else {
-                        data_array.push(0)
+                        data_array.push(0) // if no value, use 0 instead for now
                     }
                 }
                 console.log(`got data array for name:${name} -> ${JSON.stringify(data_array)}`)
@@ -67,24 +86,16 @@ var AppDataTracing = Vue.extend({
                     labels: arrayRunIds,
                     datasets: []
                 }
-                console.log("_t= " + JSON.stringify(_t))
                 _t.datasets.push({
-                        label: name,
-                        data: data_array
+                    label: name,
+                    data: data_array
                 })
-                console.log("_t= " + JSON.stringify(_t))
 
                 this.tracedData.push(_t)
             }
-
-            console.log('data: ' + JSON.stringify(this.tracedData))
+            console.log('new data: ' + this.tracedData)
         }
     }
 })
 export default AppDataTracing
 </script>
-
-
-<style>
-
-</style>

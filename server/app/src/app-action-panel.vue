@@ -96,7 +96,6 @@ var AppActionPanel = Vue.extend({
     created() {
         this.initTemplates()
         this.initTemplateInfo()
-        this.initParameters()
     },
     watch: {
         // caused by use selecting another action in the list
@@ -106,7 +105,6 @@ var AppActionPanel = Vue.extend({
             console.log('changed to action: ' + JSON.stringify(this.localActionObject))
 
             this.initTemplateInfo()
-            this.initParameters()
 
             this.notToShowStore = newActionObject.hasOwnProperty('template_id') && newActionObject.template_id != ''
         }
@@ -137,13 +135,17 @@ var AppActionPanel = Vue.extend({
                 },
                 resp => {
                     console.log('http get failed: ' + JSON.stringify(resp))
+                }).then(
+                () => {
+                    // only the 'initTemplateInfo fulfilled, we can init parameters'
+                    this.initParameters()
                 })
         },
         initParameters() {
             if (!!this.isNew) {
                 console.log('== init parameters for new action ...')
                 if (this.localActionObject.hasOwnProperty('template_id')) {
-                    console.log('get default param of template id: ' + this.localActionObject.template_id)
+                    console.log('looking for default param of template id: ' + this.localActionObject.template_id)
 
                     if (this.templateInfo.hasOwnProperty('params')) {
                         this.localActionObject.params = {}
@@ -271,7 +273,6 @@ var AppActionPanel = Vue.extend({
             console.log('select template: ' + tid)
             this.localActionObject.template_id = tid
             this.initTemplateInfo()
-            this.initParameters()
             this.notToShowStore = true
         }
     }
