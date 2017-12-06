@@ -19,10 +19,7 @@ Vue.use(VueRouter)
 
 import AppCaseMain from './app-case-main.vue'
 import AppTemplateMain from './app-template-main.vue'
-
-const AppHelpMain = {
-    template: '<h1>for god\'s sake...</h1>'
-}
+import AppHelpMain from './app-help-main.vue'
 
 const router = new VueRouter({
     routes: [

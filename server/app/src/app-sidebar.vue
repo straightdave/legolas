@@ -65,12 +65,7 @@ export default {
 
             var url = `/${iType}`
             if (filter && filter.length > 2) {
-                if (iType === 'templates') {
-                    console.log('template filtering not implemented')
-                }
-                else if (iType === 'cases') {
-                    url += `/f/${encodeURI(filter)}`
-                }
+                url += `/f/${encodeURI(filter)}`
             }
 
             console.log('sidebar >>> url: ' + url)

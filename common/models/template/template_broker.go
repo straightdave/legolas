@@ -37,6 +37,11 @@ func GetAll(path string) (result []Template, err error) {
 	return
 }
 
+func GetFiltered(word string) (result []Template, err error) {
+	err = col.Find(bson.M{"name": &bson.RegEx{Pattern: word, Options: "i"}, "removed": false}).Sort("-created_at").All(&result)
+	return
+}
+
 func GetOne(path, name string) (result Template, err error) {
 	err = col.Find(bson.M{"path": path, "name": name, "removed": false}).One(&result)
 	return

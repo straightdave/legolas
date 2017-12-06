@@ -276,6 +276,26 @@ func (server *Server) Run() {
 		}
 	})
 
+	// get filtered templates
+	m.Get("/templates/f/:word", func(p martini.Params, r render.Render) {
+		word, err := url.QueryUnescape(p["word"])
+		if err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+			return
+		}
+
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		T.SetCol(mongo)
+
+		templates, err := T.GetFiltered(word)
+		if err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, templates)
+		}
+	})
+
 	// get a template inro
 	m.Get("/template/:tid", func(p martini.Params, r render.Render) {
 		mongo := S.AskForMongo()
