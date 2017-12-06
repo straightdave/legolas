@@ -32,7 +32,7 @@ export default {
             itemCreatedAt: (new Date(this.itemObject.created_at)).toLocaleString(),
             isNew:    this.itemObject.isNew
         }
-    },
+    }
 }
 </script>
 
@@ -42,10 +42,10 @@ div#item {
     margin-top: 5px;
 }
 
-.green {
+span.green {
     color: #00B140;
 }
-.newitem {
+span.newitem {
     font-size: small;
     color: #4AACF2;
 }

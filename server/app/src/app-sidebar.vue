@@ -55,14 +55,29 @@ export default {
         }
     },
     mounted() {
-        this.getItems(this.whatFor)
+        this.getItems('')
     },
     methods: {
-        getItems(iType) {
-            this.$http.get(`/${iType}`).then(
+        getItems(filter) {
+            console.log('filter: ' + filter)
+
+            const iType = this.whatFor
+
+            var url = `/${iType}`
+            if (filter && filter.length > 2) {
+                if (iType === 'templates') {
+                    console.log('template filtering not implemented')
+                }
+                else if (iType === 'cases') {
+                    url += `/f/${encodeURI(filter)}`
+                }
+            }
+
+            console.log('sidebar >>> url: ' + url)
+            this.$http.get(url).then(
                 resp => {
                     var data = resp.body
-                    console.log(`got ${iType}: ${ JSON.stringify(data) }`)
+                    console.log(`got by ${url}: ${ JSON.stringify(data) }`)
                     if (data && data.length > 0) {
                         this.items = data
                     }
@@ -71,7 +86,7 @@ export default {
                     }
                 },
                 resp => {
-                    console.log(`calling /${iType} failed. Resp: ${ JSON.stringify(resp) }`)
+                    console.log(`calling ${url} failed. Resp: ${ JSON.stringify(resp) }`)
                     this.items = []
                 }
             )
@@ -92,6 +107,13 @@ export default {
 
         doFilter(word) {
             console.log('filter word: ' + word)
+            this.items = null
+
+            // for now, use the word as a simple name-based filter
+            this.getItems(word)
+
+            // ask outter component to close right panel
+            this.$emit('close-right-panel')
         }
     }
 }

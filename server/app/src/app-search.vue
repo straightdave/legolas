@@ -1,7 +1,7 @@
 <template>
 <div id="search-wrapper">
-    <input type="text" v-model.trim="word" placeholder="Commands">
-    <button v-on:click="$emit('do-filter', word)"><i class="fa fa-search"></i></button>
+    <input type="text" v-model.trim="word" placeholder="Commands" @keyup.enter="$emit('do-filter', word)">
+    <button @click="$emit('do-filter', word)"><i class="fa fa-search"></i></button>
 </div>
 </template>
 

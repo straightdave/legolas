@@ -32,7 +32,7 @@ var AppAction = Vue.extend({
 export default AppAction
 </script>
 
-<style>
+<style scoped>
 div#action {
     height: 40px;
     margin-bottom: 5px;

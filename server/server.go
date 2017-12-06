@@ -5,7 +5,7 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
 	"gopkg.in/mgo.v2/bson"
-	// "net/url"
+	"net/url"
 
 	A "legolas/common/models/action"
 	J "legolas/common/models/job"
@@ -26,21 +26,27 @@ func (server *Server) Run() {
 
 	J.SetRedisPool(S.GetRedisPool())
 
-	// m.Get("/cases/f/:word", func(p martini.Params, r render.Render) {
-	// 	word, err := url.QueryUnescape(p["word"])
-	// 	if err != nil {
-	// 		r.JSON(200, Ex{"error": err.Error()})
-	// 		return
-	// 	}
+	// get filtered cases
+	m.Get("/cases/f/:word", func(p martini.Params, r render.Render) {
+		word, err := url.QueryUnescape(p["word"])
+		if err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+			return
+		}
 
-	// 	cases, err := models.FilterCases(word)
-	// 	if err != nil {
-	// 		r.JSON(200, Ex{"error": err.Error()})
-	// 	} else {
-	// 		r.JSON(200, cases)
-	// 	}
-	// })
+		mongo := S.AskForMongo()
+		defer mongo.Close()
+		TC.SetCol(mongo)
 
+		cases, err := TC.GetFiltered(word)
+		if err != nil {
+			r.JSON(200, Ex{"error": err.Error()})
+		} else {
+			r.JSON(200, cases)
+		}
+	})
+
+	// get all cases (with limits)
 	m.Get("/cases", func(r render.Render) {
 		mongo := S.AskForMongo()
 		defer mongo.Close()

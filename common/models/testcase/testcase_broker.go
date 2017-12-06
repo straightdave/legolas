@@ -23,16 +23,24 @@ func getMongo() *S.Mongo {
 	}
 }
 
+// for server to list cases
+// will get output of latest run for each case
 func GetAllInTimeOrder(limit int) (result []TestCase, err error) {
 	if limit < 1 {
 		limit = 25
 	}
+
 	err = col.Find(bson.M{"removed": false}).Sort("-created_at").Limit(limit).All(&result)
 	return
 }
 
 func GetAll(path string) (result []TestCase, err error) {
 	err = col.Find(bson.M{"path": path, "removed": false}).All(&result)
+	return
+}
+
+func GetFiltered(word string) (result []TestCase, err error) {
+	err = col.Find(bson.M{"name": &bson.RegEx{Pattern: word, Options: "i"}, "removed": false}).Sort("-created_at").All(&result)
 	return
 }
 

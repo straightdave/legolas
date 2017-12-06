@@ -1,6 +1,6 @@
 <template>
 <div>
-    <app-sidebar :what-for="whatFor" @item-clicked="showCaseDetail"></app-sidebar>
+    <app-sidebar :what-for="whatFor" @item-clicked="showCaseDetail" @close-right-panel="closeRightPanel"></app-sidebar>
     <app-case-detail v-if="hasCInfo" :case-info="currentCase" @refresh-sidebar-list="refreshSidebarList"></app-case-detail>
 </div>
 </template>
@@ -30,6 +30,9 @@ var AppCaseMain = Vue.extend({
         refreshSidebarList() {
             // TODO: for now, refresh the whole page (will miss new action data)
             window.location.reload()
+        },
+        closeRightPanel() {
+            this.currentCase = null
         }
     }
 })

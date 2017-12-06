@@ -4,12 +4,14 @@ import (
 	"fmt"
 	L "log"
 	"os/exec"
+	"time"
 
 	C "legolas/common/config"
 	H "legolas/common/helpers"
 	A "legolas/common/models/action"
 	J "legolas/common/models/job"
 	E "legolas/common/models/jobstate"
+	R "legolas/common/models/run"
 	S "legolas/common/storage"
 )
 
@@ -30,23 +32,39 @@ func handle(job *J.Job) {
 
 	A.SetCol(mongo)
 	E.SetCol(mongo)
+	R.SetCol(mongo)
 
+	// get its run
+	r, err := R.GetOne(job.RunId)
+	if err != nil {
+		L.Printf("[%s] failed to get run data: %v\n", jid, err)
+		return
+	}
+
+	// get its action
 	act, err := A.GetOneById(job.ActionId)
 	if err != nil {
 		L.Printf("[%s] failed to get action data: %v\n", jid, err)
 		return
 	}
 
+	// create a job state for it
 	js := E.New(job.RunId, job.ActionId)
-	js.State = "running"
+	js.State = C.Running
 	if err := js.Save(); err != nil {
 		L.Printf("[%s] failed to create job state: %v\n", jid, err)
+		return
+	}
+	// modify its run's output to inprogress
+	r.Output = js.State
+	if err := r.Save(); err != nil {
+		L.Printf("[%s] failed to save run modification: %v\n", jid, err)
 		return
 	}
 
 	defer func() {
 		if p := recover(); p != nil {
-			js.State = "failed"
+			js.State = C.Failed
 			js.Error = p.(error).Error()
 			if err := js.Save(); err != nil {
 				L.Printf("[%s] panic in panic: failed to set job state as failed: %v\n", jid, err)
@@ -63,10 +81,10 @@ func handle(job *J.Job) {
 		}
 
 		switch prev.State {
-		case "done": // continue
+		case C.Done: // continue
 			break
-		case "failed", "aborted": // just discard it and mark as aborted
-			js.State = "aborted"
+		case C.Failed, C.Aborted: // just discard it and mark as aborted
+			js.State = C.Aborted
 			js.Error = fmt.Sprintf("previous job [action: %s] is failed/aborted", job.PrevActionId)
 			if err := js.Save(); err != nil {
 				L.Printf("[%s] failed to set job state: %v\n", jid, err)
@@ -111,11 +129,28 @@ func handle(job *J.Job) {
 		L.Printf("[%s] cannot re-fetch job state: %v\n", err)
 		return
 	}
+
 	js2.Output = string(cmdOut)
-	if js2.State != "failed" && js2.State != "aborted" {
-		js2.State = "done"
+	if js2.State != C.Failed && js2.State != C.Aborted {
+		js2.State = C.Done
 	}
+
 	if err := js2.Save(); err != nil {
 		L.Printf("[%s] failed to set job state to done: %v\n", jid, err)
+		return
+	}
+
+	// get its run again
+	r2, err := R.GetOne(job.RunId)
+	if err != nil {
+		L.Printf("[%s] failed to get run data: %v\n", jid, err)
+		return
+	}
+
+	// modify its run's output and end time
+	r2.Output = js2.State
+	r2.EndedAt = time.Now()
+	if err := r2.Save(); err != nil {
+		L.Printf("[%s] failed to save run modification: %v\n", jid, err)
 	}
 }

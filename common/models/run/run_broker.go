@@ -27,6 +27,11 @@ func getMongo() *S.Mongo {
 	}
 }
 
+func GetOne(runId bson.ObjectId) (result Run, err error) {
+	err = col.Find(bson.M{"_id": runId}).One(&result)
+	return
+}
+
 func GetAll(tc *C.TestCase) (result []Run, err error) {
 	err = col.Find(bson.M{"case_id": tc.Id}).All(&result)
 	return

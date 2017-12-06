@@ -149,10 +149,9 @@ var AppActionPanel = Vue.extend({
                     if (this.templateInfo.hasOwnProperty('params')) {
                         this.localActionObject.params = {}
                         var pTpl = this.templateInfo.params
-                        var requiredParamKeys = Object.keys(pTpl).filter(key => pTpl[key].required)
 
-                        for (var k of requiredParamKeys) {
-                            this.localActionObject.params[k] = pTpl[k].default // 'default' could be undefined, find for now
+                        for (var k of Object.keys(pTpl)) {
+                            this.localActionObject.params[k] = pTpl[k].default // 'default' could be undefined
                         }
                         console.log('got params of default: ' + JSON.stringify(this.localActionObject.params))
                     }
@@ -297,12 +296,13 @@ div#template-store {
 
 div.template-box {
     float: left;
-    height: 150px;
+    height: 200px;
     width: 200px;
     border: solid 4px #ececec;
 
     margin: 0 5px 5px 0;
     position: relative;
+    cursor: pointer;
 }
 
 div.template-box > div.name {
