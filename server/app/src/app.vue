@@ -2,6 +2,7 @@
 <div>
     <nav>
         <img id="logo" src="img/grab_logo.png" alt="grab_logo">
+        <span id="beta">beta</span>
         <ul>
             <li><router-link to="/">Cases</router-link></li>
             <li><router-link to="/templates">Templates</router-link></li>
@@ -41,6 +42,19 @@ nav {
     width: 100%;
     background-color: #ececec;
     position: relative;
+}
+
+nav span#beta {
+    display: block;
+    position: absolute;
+    font-size: small;
+    font-weight: 400;
+    color: #00B140;
+    top: 5px;
+    left: 5px;
+    border: solid 1px #00B140;
+    padding: 0 2px;
+    border-radius: 3px;
 }
 
 nav img#logo {

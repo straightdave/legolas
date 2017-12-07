@@ -306,7 +306,7 @@ div#detail-header {
 
 div#detail-header input[type="text"] {
     border: 0;
-    width: 80%;
+    width: 800px;
     background-color: #fff;
 }
 
