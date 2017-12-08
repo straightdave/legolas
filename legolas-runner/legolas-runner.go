@@ -6,6 +6,7 @@ import (
 	L "log"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 
 	C "legolas/common/config"
@@ -48,9 +49,25 @@ func main() {
 	for {
 		job, err := J.Pop()
 		if err != nil {
-			L.Printf("failed to get job from the queue: %v\n", err)
+			L.Printf("CONTINUE: failed to get job from the queue: %v\n", err)
 			continue
 		}
-		go handle(&job)
+
+		GoSafely(func() {
+			handle(&job)
+		})
 	}
+}
+
+func GoSafely(fn func()) {
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				stack := make([]byte, 1024*8)
+				stack = stack[:runtime.Stack(stack, false)]
+				L.Printf("PANIC: %s\n%s", err, stack)
+			}
+		}()
+		fn()
+	}()
 }

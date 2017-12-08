@@ -11,6 +11,7 @@ const (
 	RunIdLength   int    = 8
 	RunnerLogFile string = "legolas_runner.log"
 	ScriptHive    string = "/Users/wei.wu/myrepos/src/legolas/legolas-runner/hive"
+	JobTimeout    int    = 30 // timeout for job handling in seconds
 )
 
 const (
@@ -19,4 +20,5 @@ const (
 	Failed     string = "failed"
 	Aborted    string = "aborted"
 	Done       string = "done"
+	Timeout    string = "timeout"
 )

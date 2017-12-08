@@ -16,14 +16,25 @@ import (
 )
 
 func handle(job *J.Job) {
-	// for the sake of not breaking the runner,
-	// eat all panics here
-	defer func() {
-		if p := recover(); p != nil {
-			L.Printf("error occured in one job handling process: %v\n", p.(error))
-		}
+	ch := make(chan bool, 1)
+	go func() {
+		handling(job)
+		ch <- true
 	}()
 
+	select {
+	case <-ch:
+		L.Printf("Job handling completed in time\n")
+
+	case <-timeout(C.JobTimeout):
+		L.Printf("Job processing timeout (%d seconds max)\n", C.JobTimeout)
+		setJobTimeout(job)
+
+	default:
+	}
+}
+
+func handling(job *J.Job) {
 	jid := job.Id()
 	L.Printf("[%s] Handler: got job\n", jid)
 
@@ -55,6 +66,7 @@ func handle(job *J.Job) {
 		L.Printf("[%s] failed to create job state: %v\n", jid, err)
 		return
 	}
+
 	// modify its run's output to inprogress
 	r.Output = js.State
 	if err := r.Save(); err != nil {
@@ -83,9 +95,9 @@ func handle(job *J.Job) {
 		switch prev.State {
 		case C.Done: // continue
 			break
-		case C.Failed, C.Aborted: // just discard it and mark as aborted
+		case C.Failed, C.Aborted, C.Timeout: // just discard it and mark as aborted
 			js.State = C.Aborted
-			js.Error = fmt.Sprintf("previous job [action: %s] is failed/aborted", job.PrevActionId)
+			js.Error = fmt.Sprintf("previous job [action: %s] is [%s]", job.PrevActionId, prev.State)
 			if err := js.Save(); err != nil {
 				L.Printf("[%s] failed to set job state: %v\n", jid, err)
 			}
@@ -153,4 +165,21 @@ func handle(job *J.Job) {
 	if err := r2.Save(); err != nil {
 		L.Printf("[%s] failed to save run modification: %v\n", jid, err)
 	}
+}
+
+func setJobTimeout(job *J.Job) {
+	mongo := S.AskForMongo()
+	defer mongo.Close()
+	E.SetCol(mongo)
+
+	if js, err := E.GetOne(job.RunId, job.ActionId); err == nil {
+		js.State = C.Timeout
+		if err := js.Save(); err != nil {
+			L.Printf("Failed to save job state: %v\n", err)
+		}
+	}
+}
+
+func timeout(seconds int) <-chan time.Time {
+	return time.After(time.Second * time.Duration(seconds))
 }
