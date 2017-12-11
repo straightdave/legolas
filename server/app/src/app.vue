@@ -121,7 +121,9 @@ const App = Vue.extend({
         },
 
         logoClick() {
-            console.log('current user: ' + this.currentUser.getBasicProfile().getEmail())
+            if (this.currentUser) {
+                console.log('current user: ' + this.currentUser.getBasicProfile().getEmail())
+            }
         }
     }
 })
