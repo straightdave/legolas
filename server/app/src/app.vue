@@ -100,7 +100,7 @@ const App = Vue.extend({
                     console.log('login as ' + googleUser.getBasicProfile().getName())
                     this.currentUser = googleUser
                 },
-                error => alert(JSON.stringify(error, undefined, 2))
+                error => console.log('sign-in err: ' + JSON.stringify(error, undefined, 2))
             )
             console.log('successfully attached sign-in handler')
         },
