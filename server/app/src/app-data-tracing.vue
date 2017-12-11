@@ -16,8 +16,6 @@ Vue.use(VueChart)
 
 var AppDataTracing = Vue.extend({
     props: {
-        // due to the v-if at case-detail, the runObjects we got here are all have values
-        // i.e. the case has runs, thought in those runs there might be no traced data
         runObjects: {
             type: Array,
             required: true
@@ -32,10 +30,6 @@ var AppDataTracing = Vue.extend({
     watch: {
         runObjects(newRuns) {
             console.log('use clicked another case (so new runs)')
-
-            this.hasTracedData = false
-            this.$forceUpdate()
-
             this.initTracedData()
             this.hasTracedData = this.tracedData.length > 0
         }
@@ -47,14 +41,13 @@ var AppDataTracing = Vue.extend({
     },
     methods: {
         initTracedData() {
-
             this.tracedData.length = 0
             console.log('init traced data: ' + JSON.stringify(this.tracedData))
 
-            var arrayRunIds = []
-            var arrayNames = {} // dict of key - 0
+            var arrayRunLabels = []
+            var arrayNames = {} // dict of keys
             for (var run of this.runObjects) {
-                arrayRunIds.push(run._id)
+                arrayRunLabels.push( (new Date(run.started_at)).toLocaleString() )
 
                 if (run.traced_data) {
                     for (var k of Object.keys(run.traced_data)) {
@@ -62,8 +55,6 @@ var AppDataTracing = Vue.extend({
                     }
                 }
             }
-            // shorten run IDs
-            arrayRunIds = arrayRunIds.map(id => id.substr(id.length - 5))
             arrayNames = Object.keys(arrayNames)
 
             if (arrayNames.length === 0) {
@@ -83,7 +74,7 @@ var AppDataTracing = Vue.extend({
                 }
                 console.log(`got data array for name:${name} -> ${JSON.stringify(data_array)}`)
                 var _t = {
-                    labels: arrayRunIds,
+                    labels: arrayRunLabels,
                     datasets: []
                 }
                 _t.datasets.push({
@@ -93,7 +84,7 @@ var AppDataTracing = Vue.extend({
 
                 this.tracedData.push(_t)
             }
-            console.log('new data: ' + this.tracedData)
+            console.log('new data: ' + JSON.stringify(this.tracedData))
         }
     }
 })
