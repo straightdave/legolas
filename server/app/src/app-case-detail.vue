@@ -302,6 +302,7 @@ div#app-detail {
 div#detail-header {
     height: 80px;
     overflow: hidden;
+    position: relative;
 }
 
 div#detail-header input[type="text"] {

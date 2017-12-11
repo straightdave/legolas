@@ -8,6 +8,15 @@
 </div>
 </template>
 
+<script>
+import Vue from 'vue'
+
+const AppHelp = Vue.extend({
+
+})
+export default AppHelp
+</script>
+
 <style scoped>
 div#words {
     font-size: 30px;
