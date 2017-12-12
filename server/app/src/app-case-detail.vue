@@ -302,7 +302,6 @@ div#app-detail {
 div#detail-header {
     height: 80px;
     overflow: hidden;
-    position: relative;
 }
 
 div#detail-header input[type="text"] {
@@ -324,10 +323,10 @@ input#name {
 div#buttons {
     position: absolute;
     right: 10px;
-    top: 10px;
+    top: 60px;
 }
 
-div#detail-header div#buttons button{
+div#buttons button {
     height: 30px;
     width: 60px;
     font-size: 15px;
