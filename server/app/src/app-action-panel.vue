@@ -69,7 +69,7 @@
             </div>
 
             <div v-if="is_mocking">
-                <p>Mock data will be automatically saved to action's results dictionary during runtime</p>
+                <p>Mock data will be automatically saved to <strong>action's result</strong> and <strong>Run's context</strong> dictionary during runtime</p>
                 <div id="mock-data-list">
                     <div class="param-list-item" v-for="(p, index) in mockDataList" :key="index">
                         <a @click.stop.prevent="removeMockData(p.name)">

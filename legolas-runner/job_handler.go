@@ -124,6 +124,7 @@ func handling(job *J.Job) {
 		}
 
 		js.Results = act.MockData
+		js.Output = fmt.Sprintf("Saved mock data into results and run context: %v\n", js.Results)
 		js.State = C.Done
 		js.EndedAt = time.Now().Format(time.ANSIC)
 		if err := js.Save(); err != nil {
@@ -138,13 +139,22 @@ func handling(job *J.Job) {
 			return
 		}
 
-		// modify run's output and end time
+		// modify run's context, output state and end time
+		if run.Context == nil {
+			run.Context = make(map[string]interface{})
+		}
+		for k, v := range act.MockData {
+			run.Context[k] = v
+		}
+
 		run.Output = js.State
 		run.EndedAt = time.Now()
 		if err := run.Save(); err != nil {
 			L.Printf("[%s] failed to save run modification: %v\n", jid, err)
 			return
 		}
+
+		return // quiting
 	}
 
 	// processing the action
