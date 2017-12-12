@@ -22,15 +22,19 @@ func handle(job *J.Job) {
 		ch <- true
 	}()
 
+	timesUp := make(chan bool, 1)
+	go func() {
+		time.Sleep(time.Second * time.Duration(C.JobTimeout))
+		timesUp <- true
+	}()
+
 	select {
 	case <-ch:
 		L.Printf("Job handling completed in time\n")
 
-	case <-timeout(C.JobTimeout):
+	case <-timesUp:
 		L.Printf("Job processing timeout (%d seconds max)\n", C.JobTimeout)
 		setJobAsTimeout(job)
-
-	default:
 	}
 }
 
@@ -61,16 +65,9 @@ func handling(job *J.Job) {
 
 	// create a job state for it
 	js := E.New(job.RunId, job.ActionId)
-	js.State = C.Running
+	js.State = C.NotStarted
 	if err := js.Save(); err != nil {
 		L.Printf("[%s] failed to create job state: %v\n", jid, err)
-		return
-	}
-
-	// modify its run's output to inprogress
-	r.Output = js.State
-	if err := r.Save(); err != nil {
-		L.Printf("[%s] failed to save run modification: %v\n", jid, err)
 		return
 	}
 
@@ -88,27 +85,47 @@ func handling(job *J.Job) {
 	if job.PrevActionId != "" {
 		prev, err := E.GetOne(job.RunId, job.PrevActionId)
 		if err != nil {
-			L.Printf("[%s] failed to get previous job state: %v\n", jid, err)
+			L.Printf("[%s] failed to get previous job state [%s]: %v\n", jid, job.PrevActionId, err)
 			return
 		}
 
 		switch prev.State {
-		case C.Done: // continue
+		case C.Done:
+			// continue
 			break
-		case C.Failed, C.Aborted, C.Timeout: // just discard it and mark as aborted
+
+		case C.Failed, C.Aborted, C.Timeout:
+			// just mark as aborted and discard it
 			js.State = C.Aborted
 			js.Error = fmt.Sprintf("previous job [action: %s] is [%s]", job.PrevActionId, prev.State)
 			if err := js.Save(); err != nil {
-				L.Printf("[%s] failed to set job state: %v\n", jid, err)
+				L.Printf("[%s] failed to set new job state -> aborted: %v\n", jid, err)
 			}
 			return
-		default: // postpone it
-			L.Printf("[%s] previous job [action: %s] is not done yet. append to queue.\n", jid, job.PrevActionId)
+
+		default:
+			// postpone it
+			L.Printf("[%s] previous job [action: %s] is [%s]. Append to queue.\n", jid, job.PrevActionId, prev.State)
+			time.Sleep(10 * time.Second)
 			if err := J.Append(job); err != nil {
 				L.Printf("[%s] failed to postpone job which will be discarded: %v\n", jid, err)
 			}
 			return
 		}
+	}
+
+	// set job as running
+	js.State = C.Running
+	if err := js.Save(); err != nil {
+		L.Printf("[%s] failed to save new job state - running: %v\n", jid, err)
+		return
+	}
+
+	// set its run as running
+	r.Output = js.State
+	if err := r.Save(); err != nil {
+		L.Printf("[%s] failed to save run as running: %v\n", jid, err)
+		return
 	}
 
 	if act.IsMocking {
@@ -213,6 +230,7 @@ func handling(job *J.Job) {
 	if err := r2.Save(); err != nil {
 		L.Printf("[%s] failed to save run modification: %v\n", jid, err)
 	}
+	return
 }
 
 func setJobAsTimeout(job *J.Job) {
@@ -221,13 +239,10 @@ func setJobAsTimeout(job *J.Job) {
 	E.SetCol(mongo)
 
 	if js, err := E.GetOne(job.RunId, job.ActionId); err == nil {
+		L.Printf("Setting job [%s] as timeout\n", job.Id())
 		js.State = C.Timeout
 		if err := js.Save(); err != nil {
 			L.Printf("Failed to save job state: %v\n", err)
 		}
 	}
-}
-
-func timeout(seconds int) <-chan time.Time {
-	return time.After(time.Second * time.Duration(seconds))
 }

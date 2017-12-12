@@ -67,6 +67,7 @@ class Legolas:
         rr = col.find_one({"_id": ObjectId(self.run_id)})
         if rr:
             self._context_of_case = rr["context"]
+            print(">>> got context in run: " + str(self._context_of_case))
 
     def _set_param_of_action(self):
         print(">>> loading params of the action")
@@ -74,6 +75,7 @@ class Legolas:
         t = col.find_one({"_id": ObjectId(self.action_id)})
         if t:
             self._param_in_action = t["params"]
+            print(">>> got params in action: " + str(self._param_in_action))
 
     def _set_param_of_case(self):
         print(">>> loading params of the case")
@@ -84,6 +86,7 @@ class Legolas:
             tc = col.find_one({"_id": ObjectId(rr["case_id"])})
             if tc:
                 self._param_in_case = tc["params"]
+                print(">>> got params in case: " + str(self._param_in_case))
 
     def _set_prev_results(self):
         if self.prev_action_id:

@@ -79,8 +79,15 @@ func InvokeByCaseIdStr(caseId string) (run *Run, err error) {
 	}
 
 	run = New(cid)
+	err = run.Save()
+	if err != nil {
+		return
+	}
 
-	A.SetCol(getMongo())
+	_mongo := S.AskForMongo()
+	defer _mongo.Close()
+	A.SetCol(_mongo)
+
 	actions, err := A.GetAllByCaseId(cid)
 	if err != nil {
 		return
@@ -100,6 +107,5 @@ func InvokeByCaseIdStr(caseId string) (run *Run, err error) {
 		}
 		prev = act.Id
 	}
-	err = run.Save()
 	return
 }
