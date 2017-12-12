@@ -20,10 +20,15 @@ type Action struct {
 	Desc       string                 `json:"desc" bson:"desc"`
 	SeqNo      int                    `json:"seq_no" bson:"seq_no"`
 	Params     map[string]interface{} `json:"params" bson:"params"`
-	Disabled   bool                   `json:"disabled" bson:"disabled"`
-	Removed    bool                   `json:"removed" bson:"removed"`
-	CreatedAt  time.Time              `json:"created_at" bson:"created_at"`
-	UpdatedAt  time.Time              `json:"updated_at" bson:"updated_at"`
+
+	// for data mocking
+	IsMocking bool                   `json:"is_mocking" bson:"is_mocking"`
+	MockData  map[string]interface{} `json:"mock_data" bson:"mock_data"`
+
+	Disabled  bool      `json:"disabled" bson:"disabled"`
+	Removed   bool      `json:"removed" bson:"removed"`
+	CreatedAt time.Time `json:"created_at" bson:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
 }
 
 func (a *Action) Json() ([]byte, error) {

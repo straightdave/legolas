@@ -12,7 +12,7 @@
     <div id="action-panel" :class="{hidden: !notToShowStore}">
         <div class="action-inner-div">
             <div class="capital">
-                <span><i class="fa fa-info"></i> Basic info</span>
+                <span>Basic info</span>
             </div>
 
             <div id="action-name-box">
@@ -29,7 +29,7 @@
 
         <div id="tpl-info" class="action-inner-div">
             <div class="capital">
-                <span><i class="fa fa-puzzle-piece"></i> Template</span>
+                <span>Template Info</span>
             </div>
 
             <div id="tpl-title">
@@ -43,7 +43,7 @@
 
         <div id="param-info" class="action-inner-div">
             <div class="capital">
-                <span><i class="fa fa-list"></i> Parameters</span>
+                <span>Parameters</span>
             </div>
 
             <div id="param-list">
@@ -54,10 +54,35 @@
                     <input type="text" v-model="p.name" size="20" />
                     <input type="text" v-model="p.value" size="30" />
                 </div>
-                <div id="new-param-box">
+                <div class="new-param-box">
                     <a @click.stop.prevent="newParam()">
                         <i class="fa fa-plus"></i> New
                     </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="mock-data" class="action-inner-div">
+            <div class="capital">
+                <span>Mockingbird</span>
+                <span><input type="checkbox" v-model="is_mocking"></span>
+            </div>
+
+            <div v-if="is_mocking">
+                <p>Mock data will be automatically saved to action's results dictionary during runtime</p>
+                <div id="mock-data-list">
+                    <div class="param-list-item" v-for="(p, index) in mockDataList" :key="index">
+                        <a @click.stop.prevent="removeMockData(p.name)">
+                            <i class="fa fa-minus-circle"></i>
+                        </a>
+                        <input type="text" v-model="p.name" size="20" />
+                        <input type="text" v-model="p.value" size="30" />
+                    </div>
+                    <div class="new-param-box">
+                        <a @click.stop.prevent="newMockData()">
+                            <i class="fa fa-plus"></i> New
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -90,10 +115,14 @@ var AppActionPanel = Vue.extend({
             paramList: [],
 
             templates: [],
-            templateInfo: {name: "", desc: ""} // init value is important for async programming
+            templateInfo: {name: "", desc: ""}, // init value is important for async programming
+
+            is_mocking: !!this.actionObject.is_mocking,
+            mockDataList: []
         }
     },
     created() {
+        this.initMockData()
         this.initTemplates()
         this.initTemplateInfo()
     },
@@ -109,6 +138,17 @@ var AppActionPanel = Vue.extend({
         }
     },
     methods: {
+        initMockData() {
+            console.log('init mock data...')
+            // flatten mock data into arrays
+            if (!!this.localActionObject.mock_data) {
+                var pdict = this.localActionObject.mock_data
+                this.mockDataList = Object.keys(pdict).map(key => ({
+                    name:  key,
+                    value: pdict[key]
+                }))
+            }
+        },
         initTemplates() {
             console.log('init templates ...')
             this.$http.get('/templates').then(
@@ -134,9 +174,7 @@ var AppActionPanel = Vue.extend({
                 },
                 resp => {
                     console.log('http get failed: ' + JSON.stringify(resp))
-                }).then(
-                () => {
-                    // only the 'initTemplateInfo fulfilled, we can init parameters'
+                }).then(() => {
                     this.initParameters()
                 })
         },
@@ -187,7 +225,24 @@ var AppActionPanel = Vue.extend({
             var index = this.paramList.findIndex(i => i.name === key)
             this.paramList.splice(index, 1)
         },
+        newMockData() {
+            console.log('adding a param')
+            this.mockDataList.push({
+                name:  '',
+                value: ''
+            })
+        },
+        removeMockData(key) {
+            console.log('removing a mock data: ' + key)
+            var r = confirm("remove this data?")
+            if (!r) {
+                return
+            }
+            var index = this.mockDataList.findIndex(i => i.name === key)
+            this.mockDataList.splice(index, 1)
+        },
         saveAction() {
+            // re-check the params
             this.localActionObject.params = {}
             for (var item of this.paramList) {
                 var _k = item.name.trim()
@@ -195,6 +250,16 @@ var AppActionPanel = Vue.extend({
                     this.localActionObject.params[_k] = item.value
                 }
             }
+
+            // re-check mock data
+            this.localActionObject.mock_data = {}
+            for (var item of this.mockDataList) {
+                var _k = item.name.trim()
+                if (_k !== 'new' && _k !== '') {
+                    this.localActionObject.mock_data[_k] = item.value
+                }
+            }
+            this.localActionObject.is_mocking = this.is_mocking
 
             if (!this.localActionObject.hasOwnProperty('case_id')) {
                 console.log('saving action to a new case')
@@ -365,10 +430,10 @@ div#tpl-title {
     margin-bottom: 3px;
 }
 
-div#new-param-box {
+div.new-param-box {
     margin-top: 10px;
 }
-div#new-param-box a {
+div.new-param-box a {
     font-size: 18px;
     text-decoration: none;
     color: gray;

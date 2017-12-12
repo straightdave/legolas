@@ -28,7 +28,7 @@ func handle(job *J.Job) {
 
 	case <-timeout(C.JobTimeout):
 		L.Printf("Job processing timeout (%d seconds max)\n", C.JobTimeout)
-		setJobTimeout(job)
+		setJobAsTimeout(job)
 
 	default:
 	}
@@ -111,6 +111,43 @@ func handling(job *J.Job) {
 		}
 	}
 
+	if act.IsMocking {
+		// if the action is a mockingbird,
+		// directly save all mock data into results in jobstate
+
+		L.Printf("[%s] it's mockingbird. Saving mock data as results.", jid)
+
+		js, err := E.GetOne(job.RunId, job.ActionId)
+		if err != nil {
+			L.Printf("[%s] failed to get job state: %v\n", jid, err)
+			return
+		}
+
+		js.Results = act.MockData
+		js.State = C.Done
+		js.EndedAt = time.Now().Format(time.ANSIC)
+		if err := js.Save(); err != nil {
+			L.Printf("[%s] failed to save job state: %v\n", jid, err)
+			return
+		}
+
+		// get its run
+		run, err := R.GetOne(job.RunId)
+		if err != nil {
+			L.Printf("[%s] failed to get run data: %v\n", jid, err)
+			return
+		}
+
+		// modify run's output and end time
+		run.Output = js.State
+		run.EndedAt = time.Now()
+		if err := run.Save(); err != nil {
+			L.Printf("[%s] failed to save run modification: %v\n", jid, err)
+			return
+		}
+	}
+
+	// processing the action
 	// generate script file
 	fn := fmt.Sprintf("%s/%s__%s__%s.py", C.ScriptHive, job.RunId.Hex(), job.ActionId.Hex(), H.RandSuffix4())
 	snippet, err := act.Snippet()
@@ -123,7 +160,7 @@ func handling(job *J.Job) {
 		return
 	}
 
-	// make context data for script execution
+	// create context data for script execution
 	ctx, err := job.Json()
 	if err != nil {
 		L.Printf("[%s] failed to serialize job as script context (json): %v\n", jid, err)
@@ -134,8 +171,9 @@ func handling(job *J.Job) {
 	cmdOut, _ := cmd.CombinedOutput()
 	L.Printf("[%s] >>>\n%s\n", jid, cmdOut)
 
-	// complete job run
-	// after python process done, re-fetch the job state for updating the latest
+	// finishing the job run, update some fields
+	// re-fetch the job state for updating the latest
+	// TODO: provide 'refresh' methods for those models
 	js2, err := E.GetOne(job.RunId, job.ActionId)
 	if err != nil {
 		L.Printf("[%s] cannot re-fetch job state: %v\n", err)
@@ -167,7 +205,7 @@ func handling(job *J.Job) {
 	}
 }
 
-func setJobTimeout(job *J.Job) {
+func setJobAsTimeout(job *J.Job) {
 	mongo := S.AskForMongo()
 	defer mongo.Close()
 	E.SetCol(mongo)
